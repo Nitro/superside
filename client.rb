@@ -17,11 +17,10 @@ end
 
 puts 'Events'
 puts '-' * 80
-data.each do |event|
-  svc = event['Service']
-  puts "#{'%-30s' % svc['Updated']} #{'%20s' % svc['Hostname']} " +
+data.each do |notification|
+  svc = notification['Event']['Service']
+  puts "#{'%-30s' % svc['Updated']} #{'%15s' % notification['ClusterName']} #{'%20s' % svc['Hostname']} " +
     "#{'%25s' % svc['Name']}  " +
-    "#{status_str_for(event['PreviousStatus'])} --> " +
+    "#{status_str_for(notification['Event']['PreviousStatus'])} --> " +
     "#{status_str_for(svc['Status'])}"
 end
-

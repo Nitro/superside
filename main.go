@@ -1,13 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"container/ring"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -15,7 +15,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/newrelic/sidecar/catalog"
-	"github.com/newrelic/sidecar/service"
 	"gopkg.in/alecthomas/kingpin.v1"
 )
 
@@ -25,11 +24,17 @@ const (
 )
 
 var (
-	lastSvcChanged *service.Service
 	changes        *ring.Ring
 	changesChan    chan catalog.StateChangedEvent
 	ringSize       int
+	listeners      []chan Notification
+	listenLock     sync.Mutex
 )
+
+type Notification struct {
+	Event       *catalog.ChangeEvent
+	ClusterName string
+}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -51,6 +56,13 @@ type ApiMessage struct {
 type ApiStatus struct {
 	Message     string
 	LastChanged time.Time
+}
+
+func NotificationFromEvent(evt *catalog.StateChangedEvent) *Notification {
+	return &Notification{
+		Event: &evt.ChangeEvent,
+		ClusterName: evt.State.ClusterName,
+	}
 }
 
 func exitWithError(err error, message string) {
@@ -87,11 +99,11 @@ func stateHandler(response http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 	response.Header().Set("Content-Type", "application/json")
 
-	var changeHistory []catalog.ChangeEvent
+	var changeHistory []Notification
 	changes.Do(func(evt interface{}) {
 		if evt != nil {
 			event := evt.(catalog.StateChangedEvent)
-			changeHistory = append(changeHistory, event.ChangeEvent)
+			changeHistory = append(changeHistory, *NotificationFromEvent(&event))
 		}
 	})
 
@@ -133,16 +145,46 @@ func websockHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn.WriteMessage(websocket.TextMessage, []byte("Starting up connection"))
+	listenChan := getListener()
+	defer close(listenChan)
 
 	for {
-		messageType, p, err := conn.ReadMessage()
+		evt := <-listenChan
+
+		message, err := json.Marshal(evt)
 		if err != nil {
+			log.Error("Error marshaling JSON event " + err.Error())
+			continue
+		}
+
+		if err = conn.WriteMessage(websocket.TextMessage, message); err != nil {
+			log.Warn(err.Error())
 			return
 		}
-		if err = conn.WriteMessage(messageType, bytes.Join([][]byte{[]byte("yo momma "),  p}, []byte(""))); err != nil {
-			log.Error(err.Error())
-			return
+	}
+}
+
+// Subscribe a listener
+func getListener() chan Notification {
+	listenChan := make(chan Notification, 100)
+	listenLock.Lock()
+	listeners = append(listeners, listenChan)
+	listenLock.Unlock()
+
+	return listenChan
+}
+
+// Announce changes to all listeners
+func tellListeners(evt *catalog.StateChangedEvent) {
+	listenLock.Lock()
+	defer listenLock.Unlock()
+
+	// Try to tell the listener about the change but use a select
+	// to protect us from any blocking readers.
+	for _, listener := range listeners {
+		select {
+		case listener <- *NotificationFromEvent(evt):
+		default:
 		}
 	}
 }
@@ -153,12 +195,14 @@ func serveHttp(listenIp string, listenPort int) {
 	listenStr := fmt.Sprintf("%s:%d", listenIp, listenPort)
 
 	log.Infof("Starting up on %s", listenStr)
+	fs := http.FileServer(http.Dir("public"))
 	router := mux.NewRouter()
 
 	router.HandleFunc("/update", updateHandler).Methods("POST")
 	router.HandleFunc("/health", healthHandler).Methods("GET")
 	router.HandleFunc("/state", stateHandler).Methods("GET")
 	router.HandleFunc("/listen", websockHandler).Methods("GET")
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 	http.Handle("/", handlers.LoggingHandler(os.Stdout, router))
 
 	err := http.ListenAndServe(listenStr, nil)
@@ -184,6 +228,8 @@ func processUpdates() {
 			changes = changes.Next()
 			changes.Prev().Link(newEntry)
 		}
+
+		tellListeners(&evt)
 	}
 }
 
