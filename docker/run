@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Simple wrapper to docker to start the named image with the correct options
+
+IMAGE=$1
+echo "Starting from $IMAGE"
+docker run -i -t --label SidecarDiscover=false --net=host --name=haproxy-api $IMAGE
