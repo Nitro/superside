@@ -1,7 +1,6 @@
 package main
 
 import (
-	"container/ring"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -15,6 +14,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/newrelic/sidecar/catalog"
+	"github.com/nitro/superside/notification"
+	"github.com/nitro/superside/circular"
 	"gopkg.in/alecthomas/kingpin.v1"
 )
 
@@ -24,17 +25,11 @@ const (
 )
 
 var (
-	changes        *ring.Ring
+	changes        circular.Buffer
 	changesChan    chan catalog.StateChangedEvent
-	ringSize       int
-	listeners      []chan Notification
+	listeners      []chan notification.Notification
 	listenLock     sync.Mutex
 )
-
-type Notification struct {
-	Event       *catalog.ChangeEvent
-	ClusterName string
-}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -56,13 +51,6 @@ type ApiMessage struct {
 type ApiStatus struct {
 	Message     string
 	LastChanged time.Time
-}
-
-func NotificationFromEvent(evt *catalog.StateChangedEvent) *Notification {
-	return &Notification{
-		Event: &evt.ChangeEvent,
-		ClusterName: evt.State.ClusterName,
-	}
 }
 
 func exitWithError(err error, message string) {
@@ -99,15 +87,7 @@ func stateHandler(response http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 	response.Header().Set("Content-Type", "application/json")
 
-	var changeHistory []Notification
-	changes.Do(func(evt interface{}) {
-		if evt != nil {
-			event := evt.(catalog.StateChangedEvent)
-			changeHistory = append(changeHistory, *NotificationFromEvent(&event))
-		}
-	})
-
-	message, _ := json.Marshal(changeHistory)
+	message, _ := json.Marshal(changes.List())
 	response.Write(message)
 }
 
@@ -165,8 +145,8 @@ func websockHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Subscribe a listener
-func getListener() chan Notification {
-	listenChan := make(chan Notification, 100)
+func getListener() chan notification.Notification {
+	listenChan := make(chan notification.Notification, 100)
 	listenLock.Lock()
 	listeners = append(listeners, listenChan)
 	listenLock.Unlock()
@@ -183,7 +163,7 @@ func tellListeners(evt *catalog.StateChangedEvent) {
 	// to protect us from any blocking readers.
 	for _, listener := range listeners {
 		select {
-		case listener <- *NotificationFromEvent(evt):
+		case listener <- *notification.FromEvent(evt):
 		default:
 		}
 	}
@@ -214,21 +194,7 @@ func serveHttp(listenIp string, listenPort int) {
 // Linearize the updates coming in from the async HTTP handler
 func processUpdates() {
 	for evt := range changesChan {
-		newEntry := &ring.Ring{Value: evt}
-
-		if ringSize == 0 {
-			changes = newEntry
-			ringSize += 1
-		} else if ringSize < INITIAL_RING_SIZE {
-			changes.Prev().Link(newEntry)
-			ringSize += 1
-		} else {
-			changes = changes.Prev()
-			changes.Unlink(1)
-			changes = changes.Next()
-			changes.Prev().Link(newEntry)
-		}
-
+		changes.Insert(evt)
 		tellListeners(&evt)
 	}
 }
