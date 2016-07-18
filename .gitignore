@@ -1,4 +1,4 @@
-haproxy-api
+superside
 *.swp
 *.swo
 docker/templates
