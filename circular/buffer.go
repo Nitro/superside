@@ -7,40 +7,37 @@ import (
 	"github.com/nitro/superside/notification"
 )
 
-const (
-	INITIAL_RING_SIZE = 20
-)
-
 type Buffer struct {
-	changes        *ring.Ring
-	ringSize       int
+	changes     *ring.Ring
+	currentNode *ring.Ring
 }
 
+// Return a new, properly configured circular buffer
+func NewBuffer(size int) *Buffer {
+	newRing := ring.New(size)
+
+	return &Buffer{
+		changes:     newRing,
+		currentNode: newRing,
+	}
+}
+
+// Get all the items from the buffer that have a value, return as linear slice
 func (b *Buffer) List() []notification.Notification {
 	var changeHistory []notification.Notification
 	b.changes.Do(func(evt interface{}) {
-		if evt != nil {
-			event := evt.(catalog.StateChangedEvent)
-			changeHistory = append(changeHistory, *notification.FromEvent(&event))
+		if evt == nil {
+			return
 		}
+
+		event := evt.(catalog.StateChangedEvent)
+		changeHistory = append(changeHistory, *notification.FromEvent(&event))
 	})
 
 	return changeHistory
 }
 
 func (b *Buffer) Insert(evt catalog.StateChangedEvent) {
-	newEntry := &ring.Ring{Value: evt}
-
-	if b.ringSize == 0 {
-		b.changes = newEntry
-		b.ringSize += 1
-	} else if b.ringSize < INITIAL_RING_SIZE {
-		b.changes.Prev().Link(newEntry)
-		b.ringSize += 1
-	} else {
-		b.changes = b.changes.Prev()
-		b.changes.Unlink(1)
-		b.changes = b.changes.Next()
-		b.changes.Prev().Link(newEntry)
-	}
+	b.currentNode.Value = evt
+	b.currentNode = b.currentNode.Next()
 }
