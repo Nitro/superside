@@ -2,3 +2,7 @@ superside
 *.swp
 *.swo
 docker/templates
+.DS_Store
+.idea/
+public/app/bower_components/
+public/node_modules/
