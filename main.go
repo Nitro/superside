@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	INITIAL_RING_SIZE   = 20
+	INITIAL_RING_SIZE   = 500
 	CHANNEL_BUFFER_SIZE = 25
 )
 
