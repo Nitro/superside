@@ -2,8 +2,14 @@
 
 require 'json'
 require 'excon'
+require 'trollop'
 
-connection = Excon.new('http://localhost:7778/update')
+opts = Trollop::options do
+  opt :url,     'The URL to post updates to', default: 'http://localhost:7778/update'
+  opt :fixture, 'The fixture to post', default: '../../fixtures/deployment-sample.json'
+end
+
+connection = Excon.new(opts[:url])
 
 state_blob = {
   'State' => {
@@ -12,7 +18,7 @@ state_blob = {
   }
 }
 
-fixture = File.expand_path('../../fixtures/deployment-sample.json', __FILE__)
+fixture = File.expand_path(opts[:fixture], __FILE__)
 data = JSON.parse(File.read(fixture))
 
 data.each do |event|
