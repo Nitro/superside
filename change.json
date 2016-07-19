@@ -1,1 +1,32 @@
-{"State":{"Servers":{"ubuntu":{"Name":"ubuntu","Services":{"1b3c44ba25e9":{"ID":"1b3c44ba25e9","Name":"nginx","Image":"nginx","Created":"{{ DATE }}","Hostname":"ubuntu","Ports":[{"Type":"tcp","Port":32778,"ServicePort":0},{"Type":"tcp","Port":32779,"ServicePort":10121}],"Updated":"{{ DATE }}","ProxyMode":"http","Status":1},"923176de709f":{"ID":"923176de709f","Name":"nginx","Image":"nginx","Created":"{{ DATE }}","Hostname":"ubuntu","Ports":[{"Type":"tcp","Port":32768,"ServicePort":0},{"Type":"tcp","Port":32769,"ServicePort":10121}],"Updated":"{{ DATE }}","ProxyMode":"http","Status":0},"ce15860e3557":{"ID":"ce15860e3557","Name":"nginx","Image":"nginx","Created":"{{ DATE }}","Hostname":"ubuntu","Ports":[{"Type":"tcp","Port":32770,"ServicePort":0},{"Type":"tcp","Port":32771,"ServicePort":10121}],"Updated":"{{ DATE }}","ProxyMode":"http","Status":0}},"LastUpdated":"{{ DATE }}","LastChanged":"{{ DATE }}"}},"LastChanged":"{{ DATE }}","ClusterName":"default","Hostname":"OSFM1XBG8WML"},"ChangeEvent":{"Service":{"ID":"1b3c44ba25e9","Name":"nginx","Image":"nginx","Created":"{{ DATE }}","Hostname":"ubuntu","Ports":[{"Type":"tcp","Port":32778,"ServicePort":0},{"Type":"tcp","Port":32779,"ServicePort":10121}],"Updated":"{{ DATE }}","ProxyMode":"http","Status":1},"PreviousStatus":0,"Time":"{{ DATE }}"}}
+{
+  "State": {
+    "ClusterName": "default",
+    "Hostname": "OSFM1XBG8WML"
+  },
+  "ChangeEvent": {
+    "Service": {
+      "ID": "1b3c44ba25e9",
+      "Name": "nginx",
+      "Image": "nginx",
+      "Created": "{{ DATE }}",
+      "Hostname": "ubuntu",
+      "Ports": [
+        {
+          "Type": "tcp",
+          "Port": 32778,
+          "ServicePort": 0
+        },
+        {
+          "Type": "tcp",
+          "Port": 32779,
+          "ServicePort": 10121
+        }
+      ],
+      "Updated": "{{ DATE }}",
+      "ProxyMode": "http",
+      "Status": 1
+    },
+    "PreviousStatus": 0,
+    "Time": "{{ DATE }}"
+  }
+}
