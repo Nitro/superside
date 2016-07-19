@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('sidecar.services', ['ngRoute', 'ui.bootstrap'])
+angular.module('superside.services', ['ngRoute', 'ui.bootstrap'])
 
 .controller('servicesCtrl', function() {
 
