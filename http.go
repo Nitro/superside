@@ -50,11 +50,20 @@ func healthHandler(response http.ResponseWriter, req *http.Request) {
 }
 
 // Returns the currently stored state as a JSON blob
-func stateHandler(response http.ResponseWriter, req *http.Request) {
+func servicesHandler(response http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 	response.Header().Set("Content-Type", "application/json")
 
-	message, _ := json.Marshal(state.GetChangesList())
+	message, _ := json.Marshal(state.GetSvcEventsList())
+	response.Write(message)
+}
+
+// Returns the currently stored state as a JSON blob
+func deploymentsHandler(response http.ResponseWriter, req *http.Request) {
+	defer req.Body.Close()
+	response.Header().Set("Content-Type", "application/json")
+
+	message, _ := json.Marshal(state.GetDeployments())
 	response.Write(message)
 }
 
@@ -142,7 +151,8 @@ func serveHttp(listenIp string, listenPort int) {
 
 	router.HandleFunc("/update", updateHandler).Methods("POST")
 	router.HandleFunc("/health", healthHandler).Methods("GET")
-	router.HandleFunc("/state", stateHandler).Methods("GET")
+	router.HandleFunc("/state/services", servicesHandler).Methods("GET")
+	router.HandleFunc("/state/deployments", deploymentsHandler).Methods("GET")
 	router.HandleFunc("/listen", websockHandler).Methods("GET")
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 	http.Handle("/", handlers.LoggingHandler(os.Stdout, router))

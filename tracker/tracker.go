@@ -17,6 +17,7 @@ const (
 	INITIAL_RING_SIZE   = 500
 	CHANNEL_BUFFER_SIZE = 25
 	INITIAL_DEPLOYMENT_SIZE
+	DEPLOYMENT_CUTOFF = 10*time.Minute
 )
 
 type Deployment struct {
@@ -29,9 +30,14 @@ type Deployment struct {
 }
 
 func (d *Deployment) Matches(other *Deployment) bool {
+	// If a deployment was more than DEPLOYMENT_CUTOFF after the last event,
+	// we'll call it a new deployment.
+	timeDiff := other.StartTime.Sub(d.StartTime)
+
 	return other.Version == d.Version &&
 		other.Image == d.Image &&
-		other.Name == d.Name
+		other.Name == d.Name &&
+		timeDiff < DEPLOYMENT_CUTOFF
 }
 
 type Tracker struct {
@@ -190,8 +196,12 @@ func (t *Tracker) insertDeployment(deploy *Deployment) {
 	t.tellDeploymentListeners(deploy)
 }
 
-func (t *Tracker) GetChangesList() []notification.Notification {
+func (t *Tracker) GetSvcEventsList() []notification.Notification {
 	return t.svcEvents.List()
+}
+
+func (t *Tracker) GetDeployments() map[string][]*Deployment {
+	return t.deployments
 }
 
 // Linearize the updates coming in from the async HTTP handler
