@@ -21,7 +21,8 @@ func parseConfig(path string) *Config {
 	var config Config
 	_, err := toml.DecodeFile(path, &config)
 	if err != nil {
-		exitWithError(err, "Failed to parse config file")
+		log.Error("Failed to parse config file: %s", err.Error())
+		os.Exit(1)
 	}
 
 	proxy := config.Superside

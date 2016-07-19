@@ -1,7 +1,6 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v1"
 	"github.com/nitro/superside/tracker"
 )
@@ -11,12 +10,6 @@ type CliOpts struct {
 }
 
 var state *tracker.Tracker
-
-func exitWithError(err error, message string) {
-	if err != nil {
-		log.Fatal("%s: %s", message, err.Error())
-	}
-}
 
 func parseCommandLine() *CliOpts {
 	var opts CliOpts
