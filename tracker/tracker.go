@@ -30,8 +30,8 @@ type Deployment struct {
 }
 
 func (d *Deployment) Matches(other *Deployment) bool {
-	// If a deployment was more than DEPLOYMENT_CUTOFF after the last event,
-	// we'll call it a new deployment.
+	// If a deployment was more than DEPLOYMENT_CUTOFF after the last event
+	// for the same matching deployment, we'll call it a new deployment.
 	timeDiff := other.StartTime.Sub(d.StartTime)
 
 	return other.Version == d.Version &&
@@ -178,6 +178,35 @@ func (t *Tracker) processOneDeployment(notice *notification.Notification) {
 		// We have some but they don't match
 		t.insertDeployment(thisDeploy)
 	}
+}
+
+func (t *Tracker) RemoveSvcEventsListener(victim chan *notification.Notification) {
+	t.listenLock.Lock()
+	defer t.listenLock.Unlock()
+
+	for i, listener := range t.svcEventsListeners {
+		if listener == victim {
+			// Delete the item from the list
+			t.svcEventsListeners = append(t.svcEventsListeners[:i], t.svcEventsListeners[i+1:]...)
+			close(listener)
+			return
+		}
+	}
+}
+
+func (t *Tracker) RemoveDeploymentListener(victim chan *Deployment) {
+	t.listenLock.Lock()
+	defer t.listenLock.Unlock()
+
+	for i, listener := range t.deploymentListeners {
+		if listener == victim {
+			// Delete the item from the list
+			t.deploymentListeners = append(t.deploymentListeners[:i], t.deploymentListeners[i+1:]...)
+			close(listener)
+			return
+		}
+	}
+
 }
 
 // Try to extrapolate when a deployment started and stopped for each service

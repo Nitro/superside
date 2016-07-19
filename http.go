@@ -94,7 +94,7 @@ func updateHandler(response http.ResponseWriter, req *http.Request) {
 }
 
 // Handle the listening endpoint websocket
-func websockHandler(w http.ResponseWriter, r *http.Request) {
+func listenHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Error(err)
@@ -102,10 +102,10 @@ func websockHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	svcEventsChan := state.GetSvcEventsListener()
-	defer close(svcEventsChan)
+	defer state.RemoveSvcEventsListener(svcEventsChan)
 
 	deployChan := state.GetDeploymentListener()
-	defer close(deployChan)
+	defer state.RemoveDeploymentListener(deployChan)
 
 	// Loop, multiplexing the two channels and constructing events
 	// from each.
@@ -153,7 +153,7 @@ func serveHttp(listenIp string, listenPort int) {
 	router.HandleFunc("/health", healthHandler).Methods("GET")
 	router.HandleFunc("/api/state/services", servicesHandler).Methods("GET")
 	router.HandleFunc("/api/state/deployments", deploymentsHandler).Methods("GET")
-	router.HandleFunc("/listen", websockHandler).Methods("GET")
+	router.HandleFunc("/listen", listenHandler).Methods("GET")
 	router.PathPrefix("/").Handler(fs)
 	http.Handle("/", handlers.LoggingHandler(os.Stdout, router))
 
