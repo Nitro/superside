@@ -146,15 +146,15 @@ func serveHttp(listenIp string, listenPort int) {
 	listenStr := fmt.Sprintf("%s:%d", listenIp, listenPort)
 
 	log.Infof("Starting up on %s", listenStr)
-	fs := http.FileServer(http.Dir("public"))
+	fs := http.FileServer(http.Dir("public/app/"))
 	router := mux.NewRouter()
 
-	router.HandleFunc("/update", updateHandler).Methods("POST")
+	router.HandleFunc("/api/update", updateHandler).Methods("POST")
 	router.HandleFunc("/health", healthHandler).Methods("GET")
-	router.HandleFunc("/state/services", servicesHandler).Methods("GET")
-	router.HandleFunc("/state/deployments", deploymentsHandler).Methods("GET")
+	router.HandleFunc("/api/state/services", servicesHandler).Methods("GET")
+	router.HandleFunc("/api/state/deployments", deploymentsHandler).Methods("GET")
 	router.HandleFunc("/listen", websockHandler).Methods("GET")
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+	router.PathPrefix("/").Handler(fs)
 	http.Handle("/", handlers.LoggingHandler(os.Stdout, router))
 
 	err := http.ListenAndServe(listenStr, nil)

@@ -5,7 +5,7 @@ require 'excon'
 require 'trollop'
 
 opts = Trollop::options do
-  opt :url,     'The URL to post updates to', default: 'http://localhost:7778/update'
+  opt :url,     'The URL to post updates to', default: 'http://localhost:7778/api/update'
   opt :fixture, 'The fixture to post', default: '../../fixtures/deployment-sample.json'
 end
 
