@@ -16,12 +16,12 @@ data = JSON.parse(File.read('deployment-sample.json'))
 
 data.each do |event|
   connection.post(
-    body: state_blob.merge({
+    :body => state_blob.merge({
         'ChangeEvent' => {
-          'Service': event['Event']['Service']
+          'Service' => event['Event']['Service']
         }
       }).to_json,
-    headers: { 'Content-type': 'application/json' },
-    persistent: true
+    :headers => { 'Content-type' => 'application/json' },
+    :persistent => true
   )
 end
