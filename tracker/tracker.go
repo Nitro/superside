@@ -10,6 +10,7 @@ import (
 	"github.com/newrelic/sidecar/service"
 	"github.com/nitro/superside/circular"
 	"github.com/nitro/superside/notification"
+	"github.com/satori/go.uuid"
 )
 
 const (
@@ -19,11 +20,12 @@ const (
 )
 
 type Deployment struct {
-	Name            string
-	StartTime       time.Time
-	EndTime         time.Time
-	Version         string
-	Image           string
+	ID        string
+	Name      string
+	StartTime time.Time
+	EndTime   time.Time
+	Version   string
+	Image     string
 }
 
 func (d *Deployment) Matches(other *Deployment) bool {
@@ -33,45 +35,57 @@ func (d *Deployment) Matches(other *Deployment) bool {
 }
 
 type Tracker struct {
-	changes     *circular.Buffer
-	changesChan chan catalog.StateChangedEvent
-	listeners   []chan *notification.Notification
-	listenLock  sync.Mutex
-	deployments map[string][]*Deployment
+	svcEvents           *circular.Buffer
+	svcEventsChan       chan catalog.StateChangedEvent
+	svcEventsListeners  []chan *notification.Notification
+	deploymentListeners []chan *Deployment
+	listenLock          sync.Mutex
+	deployments         map[string][]*Deployment
 }
 
-func NewTracker(changesRingSize int) *Tracker {
+func NewTracker(svcEventsRingSize int) *Tracker {
 	return &Tracker{
-		changesChan: make(chan catalog.StateChangedEvent, CHANNEL_BUFFER_SIZE),
-		changes:     circular.NewBuffer(INITIAL_RING_SIZE),
-		deployments: make(map[string][]*Deployment, INITIAL_DEPLOYMENT_SIZE),
+		svcEventsChan: make(chan catalog.StateChangedEvent, CHANNEL_BUFFER_SIZE),
+		svcEvents:     circular.NewBuffer(svcEventsRingSize),
+		deployments:   make(map[string][]*Deployment, INITIAL_DEPLOYMENT_SIZE),
 	}
 }
 
 // Enqueue an update to the channel. Rely on channel buffer. We block if channel is full
 func (t *Tracker) EnqueueUpdate(evt catalog.StateChangedEvent) {
-	t.changesChan <- evt
+	t.svcEventsChan <- evt
 }
 
-// Subscribe a listener, returns a listening channel
-func (t *Tracker) GetListener() chan *notification.Notification {
+// Subscribe a service events listener, returns a listening channel
+func (t *Tracker) GetSvcEventsListener() chan *notification.Notification {
 	listenChan := make(chan *notification.Notification, 100)
 
 	t.listenLock.Lock()
-	t.listeners = append(t.listeners, listenChan)
+	t.svcEventsListeners = append(t.svcEventsListeners, listenChan)
 	t.listenLock.Unlock()
 
 	return listenChan
 }
 
-// Announce changes to all listeners
-func (t *Tracker) tellListeners(evt *catalog.StateChangedEvent) {
+// Subscribe a deployment events listener, returns a listening channel
+func (t *Tracker) GetDeploymentListener() chan *Deployment {
+	listenChan := make(chan *Deployment, 100)
+
+	t.listenLock.Lock()
+	t.deploymentListeners = append(t.deploymentListeners, listenChan)
+	t.listenLock.Unlock()
+
+	return listenChan
+}
+
+// Announce changes to all service event listeners
+func (t *Tracker) tellSvcEventListeners(evt *catalog.StateChangedEvent) {
 	t.listenLock.Lock()
 	defer t.listenLock.Unlock()
 
 	// Try to tell the listener about the change but use a select
 	// to protect us from any blocking readers.
-	for _, listener := range t.listeners {
+	for _, listener := range t.svcEventsListeners {
 		select {
 		case listener <- notification.FromEvent(evt):
 		default:
@@ -79,6 +93,23 @@ func (t *Tracker) tellListeners(evt *catalog.StateChangedEvent) {
 	}
 }
 
+// Announce changes to all deployment listeners
+func (t *Tracker) tellDeploymentListeners(deploy *Deployment) {
+	t.listenLock.Lock()
+	defer t.listenLock.Unlock()
+
+	// Try to tell the listener about the change but use a select
+	// to protect us from any blocking readers.
+	for _, listener := range t.deploymentListeners {
+		select {
+		case listener <- deploy:
+		default:
+		}
+	}
+}
+
+// Compare some stuff and decide if this notification looks like it's
+// a deployment event.
 func looksLikeDeployment(notice *notification.Notification) bool {
 	evt := notice.Event
 	svc := evt.Service
@@ -87,19 +118,22 @@ func looksLikeDeployment(notice *notification.Notification) bool {
 		(evt.PreviousStatus == service.UNKNOWN)
 }
 
+// Construct a deployment object from a notification object
 func deploymentFromNotification(notice *notification.Notification) *Deployment {
 	evt := notice.Event
 	svc := evt.Service
 
 	return &Deployment{
-		Name:            svc.Name,
-		StartTime:       evt.Time,
-		EndTime:         evt.Time,
-		Version:         strings.Split(evt.Service.Image, ":")[1],
-		Image:           evt.Service.Image,
+		ID:        uuid.NewV4().String(),
+		Name:      svc.Name,
+		StartTime: evt.Time,
+		EndTime:   evt.Time,
+		Version:   strings.Split(evt.Service.Image, ":")[1],
+		Image:     evt.Service.Image,
 	}
 }
 
+// Handle processing a single notification
 func (t *Tracker) processOneDeployment(notice *notification.Notification) {
 	evt := notice.Event
 	svc := evt.Service
@@ -112,7 +146,7 @@ func (t *Tracker) processOneDeployment(notice *notification.Notification) {
 		// We don't have any deployments for that service so let's add it
 		if deploys == nil {
 			t.insertDeployment(thisDeploy)
-			log.Debug("Inserting deployment: %#v", thisDeploy)
+			log.Debug("Inserting deployment: ", thisDeploy)
 			return
 		}
 
@@ -120,7 +154,7 @@ func (t *Tracker) processOneDeployment(notice *notification.Notification) {
 		lastDeploy := deploys[len(deploys)-1]
 
 		if lastDeploy.Matches(thisDeploy) {
-			log.Debug("Found matching deployment: %#v", lastDeploy)
+			log.Debug("Found matching deployment: ", lastDeploy)
 
 			if thisDeploy.StartTime.Before(lastDeploy.StartTime) {
 				lastDeploy.StartTime = thisDeploy.StartTime
@@ -129,10 +163,12 @@ func (t *Tracker) processOneDeployment(notice *notification.Notification) {
 			if lastDeploy.EndTime.Before(thisDeploy.EndTime) {
 				lastDeploy.EndTime = thisDeploy.EndTime
 			}
+
+			t.tellDeploymentListeners(lastDeploy) // Send the updated original
 			return
 		}
 
-		log.Debug("Found no matching deployments, inserting: %#v", thisDeploy)
+		log.Debug("Found no matching deployments, inserting: ", thisDeploy)
 		// We have some but they don't match
 		t.insertDeployment(thisDeploy)
 	}
@@ -140,7 +176,7 @@ func (t *Tracker) processOneDeployment(notice *notification.Notification) {
 
 // Try to extrapolate when a deployment started and stopped for each service
 func (t *Tracker) processDeployments() {
-	notifyChan := t.GetListener()
+	notifyChan := t.GetSvcEventsListener()
 	defer close(notifyChan)
 
 	for notice := range notifyChan {
@@ -148,20 +184,22 @@ func (t *Tracker) processDeployments() {
 	}
 }
 
+// Add a new deployment, also announce it to listeners
 func (t *Tracker) insertDeployment(deploy *Deployment) {
 	t.deployments[deploy.Name] = append(t.deployments[deploy.Name], deploy)
+	t.tellDeploymentListeners(deploy)
 }
 
 func (t *Tracker) GetChangesList() []notification.Notification {
-	return t.changes.List()
+	return t.svcEvents.List()
 }
 
 // Linearize the updates coming in from the async HTTP handler
 func (t *Tracker) ProcessUpdates() {
 	go t.processDeployments()
 
-	for evt := range t.changesChan {
-		t.changes.Insert(evt)
-		t.tellListeners(&evt)
+	for evt := range t.svcEventsChan {
+		t.svcEvents.Insert(evt)
+		t.tellSvcEventListeners(&evt)
 	}
 }

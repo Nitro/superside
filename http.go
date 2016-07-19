@@ -92,13 +92,33 @@ func websockHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	listenChan := state.GetListener()
-	defer close(listenChan)
+	svcEventsChan := state.GetSvcEventsListener()
+	defer close(svcEventsChan)
 
+	deployChan := state.GetDeploymentListener()
+	defer close(deployChan)
+
+	// Loop, multiplexing the two channels and constructing events
+	// from each.
 	for {
-		evt := <-listenChan
+		var message []byte
 
-		message, err := json.Marshal(evt)
+		select {
+		case evt := <-svcEventsChan:
+			output := struct {
+				Type string
+				Data interface{}
+			}{"ServiceEvent", evt}
+			message, err = json.Marshal(output)
+
+		case deploy := <-deployChan:
+			output := struct {
+				Type string
+				Data interface{}
+			}{"Deployment", deploy}
+			message, err = json.Marshal(output)
+		}
+
 		if err != nil {
 			log.Error("Error marshaling JSON event " + err.Error())
 			continue
