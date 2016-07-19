@@ -12,7 +12,8 @@ state_blob = {
   }
 }
 
-data = JSON.parse(File.read('deployment-sample.json'))
+fixture = File.expand_path('../../fixtures/deployment-sample.json', __FILE__)
+data = JSON.parse(File.read(fixture))
 
 data.each do |event|
   data =  JSON.pretty_generate(state_blob.merge({
