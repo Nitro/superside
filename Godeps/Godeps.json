@@ -98,6 +98,11 @@
 			"Rev": "9c068cf16d982f8bd444b8c352acbeec34c4fe5b"
 		},
 		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Comment": "v1.0.0-17-ga836c37",
+			"Rev": "a836c37014dbbf0d1e871d04531b851fcbdeb22d"
+		},
+		{
 			"ImportPath": "github.com/hashicorp/errwrap",
 			"Rev": "7554cd9344cec97297fa6649b055a8c98c2a1e55"
 		},
