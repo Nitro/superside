@@ -54,7 +54,7 @@ func stateHandler(response http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 	response.Header().Set("Content-Type", "application/json")
 
-	message, _ := json.Marshal(changes.List())
+	message, _ := json.Marshal(state.GetChangesList())
 	response.Write(message)
 }
 
@@ -78,7 +78,7 @@ func updateHandler(response http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	changesChan <- evt // Rely on channel buffer. We block if channel is full
+	state.EnqueueUpdate(evt) // Potentially blocking
 
 	message, _ := json.Marshal(ApiMessage{Message: "OK"})
 	response.Write(message)
@@ -92,7 +92,7 @@ func websockHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	listenChan := getListener()
+	listenChan := state.GetListener()
 	defer close(listenChan)
 
 	for {

@@ -1,30 +1,16 @@
 package main
 
 import (
-	"sync"
-
 	log "github.com/Sirupsen/logrus"
-	"github.com/newrelic/sidecar/catalog"
-	"github.com/nitro/superside/circular"
-	"github.com/nitro/superside/notification"
 	"gopkg.in/alecthomas/kingpin.v1"
-)
-
-const (
-	INITIAL_RING_SIZE   = 500
-	CHANNEL_BUFFER_SIZE = 25
-)
-
-var (
-	changes     *circular.Buffer
-	changesChan chan catalog.StateChangedEvent
-	listeners   []chan notification.Notification
-	listenLock  sync.Mutex
+	"github.com/nitro/superside/tracker"
 )
 
 type CliOpts struct {
 	ConfigFile *string
 }
+
+var state *tracker.Tracker
 
 func exitWithError(err error, message string) {
 	if err != nil {
@@ -39,47 +25,12 @@ func parseCommandLine() *CliOpts {
 	return &opts
 }
 
-// Subscribe a listener
-func getListener() chan notification.Notification {
-	listenChan := make(chan notification.Notification, 100)
-	listenLock.Lock()
-	listeners = append(listeners, listenChan)
-	listenLock.Unlock()
-
-	return listenChan
-}
-
-// Announce changes to all listeners
-func tellListeners(evt *catalog.StateChangedEvent) {
-	listenLock.Lock()
-	defer listenLock.Unlock()
-
-	// Try to tell the listener about the change but use a select
-	// to protect us from any blocking readers.
-	for _, listener := range listeners {
-		select {
-		case listener <- *notification.FromEvent(evt):
-		default:
-		}
-	}
-}
-
-// Linearize the updates coming in from the async HTTP handler
-func processUpdates() {
-	for evt := range changesChan {
-		changes.Insert(evt)
-		tellListeners(&evt)
-	}
-}
-
 func main() {
 	opts := parseCommandLine()
 	config := parseConfig(*opts.ConfigFile)
 
-	changesChan = make(chan catalog.StateChangedEvent, CHANNEL_BUFFER_SIZE)
-	changes = circular.NewBuffer(INITIAL_RING_SIZE)
-
-	go processUpdates()
+	state = tracker.NewTracker(tracker.INITIAL_RING_SIZE)
+	go state.ProcessUpdates()
 
 	serveHttp(config.Superside.BindIP, config.Superside.BindPort)
 }
