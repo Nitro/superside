@@ -21,7 +21,7 @@ puts '-' * 80
 data.each do |notification|
   svc = notification['Event']['Service']
   puts "#{'%-30s' % svc['Updated']} #{'%15s' % notification['ClusterName']} #{'%20s' % svc['Hostname']} " +
-    "#{'%25s' % svc['Name']}  " +
+    "#{'%25s' % svc['Name']} #{svc['Image'].split(/:/).last} " +
     "#{status_for(notification['Event']['PreviousStatus'])} --> " +
     "#{status_for(svc['Status'])}"
 end
