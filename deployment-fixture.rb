@@ -15,12 +15,16 @@ state_blob = {
 data = JSON.parse(File.read('deployment-sample.json'))
 
 data.each do |event|
+  data =  JSON.pretty_generate(state_blob.merge({
+    'ChangeEvent' => {
+      'Service' => event['Event']['Service'],
+      'PreviousStatus' => event['Event']['PreviousStatus'],
+      'Time' => event['Event']['Time']
+    }
+  }))
+
   connection.post(
-    :body => state_blob.merge({
-        'ChangeEvent' => {
-          'Service' => event['Event']['Service']
-        }
-      }).to_json,
+    :body => data,
     :headers => { 'Content-type' => 'application/json' },
     :persistent => true
   )
