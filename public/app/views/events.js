@@ -4,9 +4,9 @@
     angular.module('superside.views')
         .controller('eventsController', eventsController);
 
-    eventsController.$inject = ['$filter', 'stateService', 'websocketService'];
+    eventsController.$inject = ['$scope', 'stateService', 'websocketService'];
 
-    function eventsController($filter, stateService, websocketService) {
+    function eventsController($scope, stateService, websocketService) {
 
 		var self = this;
 		self.events = stateService.events;
@@ -37,6 +37,9 @@
 			*/
 
 		websocketService.setupSocket({
+			onMessage: function() {
+				$scope.$apply(); // WTF Angular... thanks for not updating the binding for us
+			},
 			onError: function(event) {
 				console.log(event)
 			},

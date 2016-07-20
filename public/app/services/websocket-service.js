@@ -34,12 +34,10 @@
 
                 };
 
-
                 // Handle messages sent by the server.
                 socket.onmessage = function(event) {
                     var message = event.data;
 					var evt = angular.fromJson(message)
-					console.log(evt)
 					stateService.events.push($filter('uiEvent')(evt.Data))
 
                     if (typeof options.onMessage === 'function') {
