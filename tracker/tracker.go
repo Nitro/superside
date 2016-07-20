@@ -1,7 +1,6 @@
 package tracker
 
 import (
-	"strings"
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
@@ -9,7 +8,6 @@ import (
 	"github.com/newrelic/sidecar/service"
 	"github.com/nitro/superside/circular"
 	"github.com/nitro/superside/datatypes"
-	"github.com/satori/go.uuid"
 )
 
 const (
@@ -102,27 +100,12 @@ func looksLikeDeployment(notice *datatypes.Notification) bool {
 		(evt.PreviousStatus == service.UNKNOWN)
 }
 
-// Construct a deployment object from a datatypes object
-func deploymentFromNotification(notice *datatypes.Notification) *datatypes.Deployment {
-	evt := notice.Event
-	svc := evt.Service
-
-	return &datatypes.Deployment{
-		ID:        uuid.NewV4().String(),
-		Name:      svc.Name,
-		StartTime: evt.Time,
-		EndTime:   evt.Time,
-		Version:   strings.Split(evt.Service.Image, ":")[1],
-		Image:     evt.Service.Image,
-	}
-}
-
 // Handle processing a single datatypes
 func (t *Tracker) processOneDeployment(notice *datatypes.Notification) {
 	evt := notice.Event
 	svc := evt.Service
 
-	thisDeploy := deploymentFromNotification(notice)
+	thisDeploy := datatypes.DeploymentFromNotification(notice)
 
 	if looksLikeDeployment(notice) {
 		deploys := t.deployments[svc.Name]
