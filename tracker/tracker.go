@@ -3,57 +3,35 @@ package tracker
 import (
 	"strings"
 	"sync"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/newrelic/sidecar/catalog"
 	"github.com/newrelic/sidecar/service"
 	"github.com/nitro/superside/circular"
-	"github.com/nitro/superside/notification"
+	"github.com/nitro/superside/datatypes"
 	"github.com/satori/go.uuid"
 )
 
 const (
-	INITIAL_RING_SIZE   = 500
-	CHANNEL_BUFFER_SIZE = 25
-	INITIAL_DEPLOYMENT_SIZE
-	DEPLOYMENT_CUTOFF = 10*time.Minute
+	INITIAL_RING_SIZE       = 500 // We'll track 500 service events globally
+	CHANNEL_BUFFER_SIZE     = 25
+	INITIAL_DEPLOYMENT_SIZE = 20
 )
 
-type Deployment struct {
-	ID        string
-	Name      string
-	StartTime time.Time
-	EndTime   time.Time
-	Version   string
-	Image     string
-}
-
-func (d *Deployment) Matches(other *Deployment) bool {
-	// If a deployment was more than DEPLOYMENT_CUTOFF after the last event
-	// for the same matching deployment, we'll call it a new deployment.
-	timeDiff := other.StartTime.Sub(d.StartTime)
-
-	return other.Version == d.Version &&
-		other.Image == d.Image &&
-		other.Name == d.Name &&
-		timeDiff < DEPLOYMENT_CUTOFF
-}
-
 type Tracker struct {
-	svcEvents           *circular.Buffer
+	svcEvents           *circular.SvcEventsBuffer
 	svcEventsChan       chan catalog.StateChangedEvent
-	svcEventsListeners  []chan *notification.Notification
-	deploymentListeners []chan *Deployment
+	svcEventsListeners  []chan *datatypes.Notification
+	deploymentListeners []chan *datatypes.Deployment
 	listenLock          sync.Mutex
-	deployments         map[string][]*Deployment
+	deployments         map[string]*circular.DeploymentsBuffer
 }
 
 func NewTracker(svcEventsRingSize int) *Tracker {
 	return &Tracker{
 		svcEventsChan: make(chan catalog.StateChangedEvent, CHANNEL_BUFFER_SIZE),
-		svcEvents:     circular.NewBuffer(svcEventsRingSize),
-		deployments:   make(map[string][]*Deployment, INITIAL_DEPLOYMENT_SIZE),
+		svcEvents:     circular.NewSvcEventsBuffer(svcEventsRingSize),
+		deployments:   make(map[string]*circular.DeploymentsBuffer, INITIAL_DEPLOYMENT_SIZE),
 	}
 }
 
@@ -63,8 +41,8 @@ func (t *Tracker) EnqueueUpdate(evt catalog.StateChangedEvent) {
 }
 
 // Subscribe a service events listener, returns a listening channel
-func (t *Tracker) GetSvcEventsListener() chan *notification.Notification {
-	listenChan := make(chan *notification.Notification, 100)
+func (t *Tracker) GetSvcEventsListener() chan *datatypes.Notification {
+	listenChan := make(chan *datatypes.Notification, 100)
 
 	t.listenLock.Lock()
 	t.svcEventsListeners = append(t.svcEventsListeners, listenChan)
@@ -74,8 +52,8 @@ func (t *Tracker) GetSvcEventsListener() chan *notification.Notification {
 }
 
 // Subscribe a deployment events listener, returns a listening channel
-func (t *Tracker) GetDeploymentListener() chan *Deployment {
-	listenChan := make(chan *Deployment, 100)
+func (t *Tracker) GetDeploymentListener() chan *datatypes.Deployment {
+	listenChan := make(chan *datatypes.Deployment, 100)
 
 	t.listenLock.Lock()
 	t.deploymentListeners = append(t.deploymentListeners, listenChan)
@@ -93,14 +71,14 @@ func (t *Tracker) tellSvcEventListeners(evt *catalog.StateChangedEvent) {
 	// to protect us from any blocking readers.
 	for _, listener := range t.svcEventsListeners {
 		select {
-		case listener <- notification.FromEvent(evt):
+		case listener <- datatypes.NotificationFromEvent(evt):
 		default:
 		}
 	}
 }
 
 // Announce changes to all deployment listeners
-func (t *Tracker) tellDeploymentListeners(deploy *Deployment) {
+func (t *Tracker) tellDeploymentListeners(deploy *datatypes.Deployment) {
 	t.listenLock.Lock()
 	defer t.listenLock.Unlock()
 
@@ -114,9 +92,9 @@ func (t *Tracker) tellDeploymentListeners(deploy *Deployment) {
 	}
 }
 
-// Compare some stuff and decide if this notification looks like it's
+// Compare some stuff and decide if this datatypes looks like it's
 // a deployment event.
-func looksLikeDeployment(notice *notification.Notification) bool {
+func looksLikeDeployment(notice *datatypes.Notification) bool {
 	evt := notice.Event
 	svc := evt.Service
 
@@ -124,12 +102,12 @@ func looksLikeDeployment(notice *notification.Notification) bool {
 		(evt.PreviousStatus == service.UNKNOWN)
 }
 
-// Construct a deployment object from a notification object
-func deploymentFromNotification(notice *notification.Notification) *Deployment {
+// Construct a deployment object from a datatypes object
+func deploymentFromNotification(notice *datatypes.Notification) *datatypes.Deployment {
 	evt := notice.Event
 	svc := evt.Service
 
-	return &Deployment{
+	return &datatypes.Deployment{
 		ID:        uuid.NewV4().String(),
 		Name:      svc.Name,
 		StartTime: evt.Time,
@@ -139,8 +117,8 @@ func deploymentFromNotification(notice *notification.Notification) *Deployment {
 	}
 }
 
-// Handle processing a single notification
-func (t *Tracker) processOneDeployment(notice *notification.Notification) {
+// Handle processing a single datatypes
+func (t *Tracker) processOneDeployment(notice *datatypes.Notification) {
 	evt := notice.Event
 	svc := evt.Service
 
@@ -157,7 +135,7 @@ func (t *Tracker) processOneDeployment(notice *notification.Notification) {
 		}
 
 		// We have some and the last one matches
-		lastDeploy := deploys[len(deploys)-1]
+		lastDeploy := deploys.GetLast()
 
 		if lastDeploy.Matches(thisDeploy) {
 			log.Debug("Found matching deployment: ", lastDeploy)
@@ -180,7 +158,7 @@ func (t *Tracker) processOneDeployment(notice *notification.Notification) {
 	}
 }
 
-func (t *Tracker) RemoveSvcEventsListener(victim chan *notification.Notification) {
+func (t *Tracker) RemoveSvcEventsListener(victim chan *datatypes.Notification) {
 	t.listenLock.Lock()
 	defer t.listenLock.Unlock()
 
@@ -194,7 +172,7 @@ func (t *Tracker) RemoveSvcEventsListener(victim chan *notification.Notification
 	}
 }
 
-func (t *Tracker) RemoveDeploymentListener(victim chan *Deployment) {
+func (t *Tracker) RemoveDeploymentListener(victim chan *datatypes.Deployment) {
 	t.listenLock.Lock()
 	defer t.listenLock.Unlock()
 
@@ -220,17 +198,25 @@ func (t *Tracker) processDeployments() {
 }
 
 // Add a new deployment, also announce it to listeners
-func (t *Tracker) insertDeployment(deploy *Deployment) {
-	t.deployments[deploy.Name] = append(t.deployments[deploy.Name], deploy)
+func (t *Tracker) insertDeployment(deploy *datatypes.Deployment) {
+	if t.deployments[deploy.Name] == nil {
+		t.deployments[deploy.Name] = circular.NewDeploymentsBuffer(INITIAL_DEPLOYMENT_SIZE)
+	}
+
+	t.deployments[deploy.Name].Insert(deploy)
 	t.tellDeploymentListeners(deploy)
 }
 
-func (t *Tracker) GetSvcEventsList() []notification.Notification {
-	return t.svcEvents.List()
+func (t *Tracker) GetSvcEventsList() []datatypes.Notification {
+	return t.svcEvents.All()
 }
 
-func (t *Tracker) GetDeployments() map[string][]*Deployment {
-	return t.deployments
+func (t *Tracker) GetDeployments() map[string][]*datatypes.Deployment {
+	allDeploys := make(map[string][]*datatypes.Deployment, len(t.deployments))
+	for name, ring := range t.deployments {
+		allDeploys[name] = ring.All()
+	}
+	return allDeploys
 }
 
 // Linearize the updates coming in from the async HTTP handler

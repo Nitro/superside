@@ -1,4 +1,4 @@
-package notification
+package datatypes
 
 import (
 	"github.com/newrelic/sidecar/catalog"
@@ -9,7 +9,7 @@ type Notification struct {
 	ClusterName string
 }
 
-func FromEvent(evt *catalog.StateChangedEvent) *Notification {
+func NotificationFromEvent(evt *catalog.StateChangedEvent) *Notification {
 	return &Notification{
 		Event: &evt.ChangeEvent,
 		ClusterName: evt.State.ClusterName,
