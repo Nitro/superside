@@ -10,8 +10,10 @@
 
         var services = [];
         var deployments = [];
+        var events = [];
 
         return {
+			events:events,
 
             resolveInitialServices: function() {
 

@@ -4,9 +4,9 @@
     angular.module('superside.services')
         .factory('websocketService', websocketService);
 
-    websocketService.$inject = [];
+    websocketService.$inject = ['stateService', '$filter'];
 
-    function websocketService() {
+    function websocketService(stateService, $filter) {
 
         var socket = null;
 
@@ -38,6 +38,9 @@
                 // Handle messages sent by the server.
                 socket.onmessage = function(event) {
                     var message = event.data;
+					var evt = angular.fromJson(message)
+					console.log(evt)
+					stateService.events.push($filter('uiEvent')(evt.Data))
 
                     if (typeof options.onMessage === 'function') {
                         options.onMessage(message);

@@ -8,15 +8,15 @@
 
     function eventsController($filter, stateService, websocketService) {
 
-        var self = this;
-        self.events = [];
+		var self = this;
+		self.events = stateService.events;
 
-        stateService.resolveInitialServices()
+        /*stateService.resolveInitialServices()
             .then(function() {
                 var initialEvents = stateService.getCurrentServices();
 
                 _.forEach(initialEvents, function(event) {
-                    self.events.push($filter('uiEvent')(event));
+                    stateService.events.push($filter('uiEvent')(event));
                 });
 
             });
@@ -28,12 +28,19 @@
                 _.forEach(initialDeployments, function(services) {
 
                     _.forEach(services, function(service) {
-                        self.events.push($filter('uiEvent')(service));
+                        stateService.events.push($filter('uiEvent')(service));
                     });
 
                 });
 
             });
+			*/
+
+		websocketService.setupSocket({
+			onError: function(event) {
+				console.log(event)
+			},
+		})
 
     }
 
