@@ -10,35 +10,14 @@
 
 		var self = this;
 		self.events = stateService.events;
+		self.deployments = stateService.deployments;
 
-        /*stateService.resolveInitialServices()
-            .then(function() {
-                var initialEvents = stateService.getCurrentServices();
-
-                _.forEach(initialEvents, function(event) {
-                    stateService.events.push($filter('uiEvent')(event));
-                });
-
-            });
-
-        stateService.resolveInitialDeployments()
-            .then(function() {
-                var initialDeployments = stateService.getCurrentDeployments();
-
-                _.forEach(initialDeployments, function(services) {
-
-                    _.forEach(services, function(service) {
-                        stateService.events.push($filter('uiEvent')(service));
-                    });
-
-                });
-
-            });
-			*/
+		stateService.run();
 
 		websocketService.setupSocket({
 			onMessage: function() {
-				$scope.$apply(); // WTF Angular... thanks for not updating the binding for us
+ 				// WTF Angular... thanks for not updating the binding for us
+				$scope.$apply();
 			},
 			onError: function(event) {
 				console.log(event)

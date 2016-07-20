@@ -1,70 +1,60 @@
 ;(function (angular) {
-    'use strict';
+	'use strict';
 
-    angular.module('superside.services')
-        .factory('stateService', stateService);
+	angular.module('superside.services')
+		.factory('stateService', stateService);
 
-    stateService.$inject = ['$http', '$q'];
+	stateService.$inject = ['$http', '$q', '$filter'];
 
-    function stateService($http, $q) {
+	function stateService($http, $q, $filter) {
+		var services = [];
+		var deployments = {};
+		var events = [];
 
-        var services = [];
-        var deployments = [];
-        var events = [];
+		return {
+			events: events,
+			services: services,
+			deployments: deployments,
 
-        return {
-			events:events,
+			run: function() {
+				$http({
+					method: 'GET',
+					url: '/api/state/services',
+					dataType: 'json'
+				}).then(function(response) {
+					services = response.data;
+					_.each(response.data, function(event) {
+						events.push($filter('uiEvent')(event));
+					});
 
-            resolveInitialServices: function() {
+					$http({
+						method: 'GET',
+						url: '/api/state/deployments',
+						dataType: 'json'
+					}).then(function(response) {
+						_.each(response.data, function(service, name) {
+							_.each(service, function(deploy) {
+								if (deployments[name] == null) {
+									deployments[name] = {};
+								}
+								deployments[name][deploy.ID] = deploy;
+								events.push($filter('uiEvent')(deploy));
+							});
+						});
 
-                var servicesResolve = $q.defer();
+						events = _.sortBy(events, function(evt) {
+							if (evt.StartTime != null) { return evt.StartTime };
+							return evt.Time;
+						});
 
-                $http({
-                    method: 'GET',
-                    url: '/api/state/services',
-                    dataType: 'json'
-                }).then(function(response) {
-                    services = response.data;
-                    servicesResolve.resolve();
-                }, function (error) {
-                    console.log('ERROR: ' + error);
-                    servicesResolve.reject();
-                });
-
-                return servicesResolve.promise;
-
-            },
-
-            resolveInitialDeployments: function() {
-
-                var deploymentsResolve = $q.defer();
-
-                $http({
-                    method: 'GET',
-                    url: '/api/state/deployments',
-                    dataType: 'json'
-                }).then(function(response) {
-                    deployments = response.data;
-                    deploymentsResolve.resolve();
-                }, function (error) {
-                    console.log('ERROR: ' + error);
-                    deploymentsResolve.reject();
-                });
-
-                return deploymentsResolve.promise;
-
-            },
-
-            getCurrentServices: function() {
-                return services;
-            },
-
-            getCurrentDeployments: function() {
-                return deployments;
-            }
-
-        }
-
-    }
+					}, function (error) {
+						console.log('ERROR: ' + error);
+					});
+				}, function (error) {
+					console.log('ERROR: ' + error);
+				});
+			},
+		}
+	}
 
 })(angular);

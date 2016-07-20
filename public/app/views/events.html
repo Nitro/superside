@@ -1,4 +1,51 @@
-<div ng-repeat="event in eventsCtrl.events | orderBy: event.time: true track by $index">
-    {{event}}
-    <br><br>
+<style>
+  .bold {
+    font-weight: bold;
+  }
+</style>
+<div class="col-md-6">
+  <div class="panel panel-primary">
+    <div class="panel-heading"><h4>All Events</h4></div>
+	<div class="panel-body">
+      <table class="table">
+	  <tr>
+	  	<th>Cluster</th>
+	  	<th>Name</th><th>Version</th><th>When</th><!--<th>Type</th>-->
+		<th>Previous Status</th><th>New Status</th>
+	  </tr>
+      <tr ng-repeat="event in eventsCtrl.events" 
+	      ng-class="{'success': event.StatusCode == 0, 'warning': event.StatusCode == 1, 'danger': event.StatusCode == 2 }" ng-class="{'bold': event.Type == 'Deployment'}">
+		<td>{{ event.ClusterName }}</td>
+		<td>{{ event.Name }}</td>
+		<td>{{ event.Version }}</td>
+        <td>{{ event.Time | timeAgo }}</td>
+        <!--<td ng-class="{'bold': event.Type == 'Deployment'}">{{ event.Type }}</td>-->
+		<td>{{ event.PreviousStatus }}</td>
+		<td>{{ event.Status }}</td>
+      </tr>
+      </table>
+	</div>
+	</div>
+  </div>
+</div>
+<div class="col-md-6">
+  <div class="panel panel-primary">
+    <div class="panel-heading"><h4>Deployments</h4></div>
+	<div class="panel-body">
+      <table ng-repeat="service in eventsCtrl.deployments" in class="table">
+	  <tr>
+	  	<th>Name</th><th>Version</th><th>When</th><th>StartTime</th><th>EndTime</th>
+	  </tr>
+      <tr ng-repeat="deploy in service ">
+		<td>{{ deploy.Name }}</td>
+		<td>{{ deploy.Version }}</td>
+        <td>{{ deploy.Time | timeAgo }}</td>
+        <td ng-class="{'bold': deploy.Type == 'Deployment'}">{{ deploy.Type }}</td>
+		<td>{{ deploy.StartTime | timeAgo }}</td>
+		<td>{{ deploy.EndTime | timeAgo}}</td>
+      </tr>
+      </table>
+	</div>
+	</div>
+  </div>
 </div>

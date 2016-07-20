@@ -40,6 +40,12 @@
 					var evt = angular.fromJson(message)
 					stateService.events.push($filter('uiEvent')(evt.Data))
 
+					if (evt.Type == 'ServiceEvent') {
+						stateService.services.push(evt.Data)
+					} else if(evt.Type == 'Deployment') {
+						stateService.deployments.push(evt.Data)
+					}
+
                     if (typeof options.onMessage === 'function') {
                         options.onMessage(message);
                     }

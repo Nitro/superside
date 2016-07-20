@@ -25,11 +25,11 @@
     })
 
     .filter('statusStr', function() {
-        return function(status, previousStatus) {
+        return function(status) {
 
             var statusStr = '';
 
-            switch (previousStatus) {
+            switch (status) {
                 case 0:
                     statusStr += "Alive";
                     break;
@@ -41,21 +41,6 @@
                     break;
                 default:
                     statusStr += "Tombstone";
-                    break
-            }
-
-            switch (status) {
-                case 0:
-                    statusStr += " --> Alive";
-                    break;
-                case 2:
-                    statusStr += " --> Unhealthy";
-                    break;
-                case 3:
-                    statusStr += " --> Unknown";
-                    break;
-                default:
-                    statusStr += " --> Tombstone";
                     break
             }
 
@@ -116,38 +101,40 @@
     .filter('uiEvent', function($filter) {
 
         return function(incident) {
+		console.log(incident);
 
             var cleanServiceEvent = {
-                name: null,
-                version: null,
-                cluster: null,
-                notificationType: null,
-                statusChange: null,
-                time: null,
-                startTime: null,
-                endTime: null,
-                deploymentId: null
+                Name: null,
+                Version: null,
+                ClusterName: null,
+                Type: null,
+                Time: null,
+                StartTime: null,
+                EndTime: null,
+                DeploymentId: null,
+				StatusCode: null
             };
 
             if (incident.hasOwnProperty('Event')) {
                 var service = incident.Event.Service;
 
-                cleanServiceEvent.notificationType = 'EVENT';
-                cleanServiceEvent.cluster = incident.Event.ClusterName;
-                cleanServiceEvent.name = service.Name;
-                cleanServiceEvent.version = $filter('extractTag')(service.Image);
-                cleanServiceEvent.statusChange = $filter('statusStr')(service.Status, incident.Event.PreviousStatus);
-                cleanServiceEvent.time = incident.Event.Time;
-            }
-            else {
-
-                cleanServiceEvent.notificationType = 'DEPLOYMENT';
-                cleanServiceEvent.cluster = incident.ClusterName;
-                cleanServiceEvent.name = incident.Name;
-                cleanServiceEvent.version = incident.Version;
-                cleanServiceEvent.time = cleanServiceEvent.endTime = incident.EndTime;
-                cleanServiceEvent.startTime = incident.StartTime;
-                cleanServiceEvent.deploymentId = incident.ID
+                cleanServiceEvent.Type = 'ServiceEvent';
+                cleanServiceEvent.ClusterName = incident.ClusterName;
+                cleanServiceEvent.Name = service.Name;
+                cleanServiceEvent.Version = $filter('extractTag')(service.Image);
+                cleanServiceEvent.PreviousStatus = $filter('statusStr')(incident.Event.PreviousStatus);
+				cleanServiceEvent.Status = $filter('statusStr')(service.Status);
+				cleanServiceEvent.StatusCode = service.Status;
+                cleanServiceEvent.Time = incident.Event.Time;
+            } else {
+                cleanServiceEvent.Type = 'Deployment';
+                cleanServiceEvent.ClusterName = incident.ClusterName;
+                cleanServiceEvent.Name = incident.Name;
+                cleanServiceEvent.Version = incident.Version;
+                cleanServiceEvent.Time = incident.EndTime;
+                cleanServiceEvent.EndTime = incident.EndTime;
+                cleanServiceEvent.StartTime = incident.StartTime;
+                cleanServiceEvent.DeploymentId = incident.ID;
 
             }
 
