@@ -3,7 +3,7 @@
 require 'excon'
 require 'json'
 
-raw = Excon.get('http://localhost:7778/state').body
+raw = Excon.get('http://localhost:7778/api/state/services').body
 data = JSON.parse(raw)
 
 def status_for(status)
