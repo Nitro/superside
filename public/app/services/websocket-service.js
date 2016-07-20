@@ -43,7 +43,7 @@
 					if (evt.Type == 'ServiceEvent') {
 						stateService.services.push(evt.Data)
 					} else if(evt.Type == 'Deployment') {
-						stateService.deployments.push(evt.Data)
+						stateService.addDeployment(evt.Data)
 					}
 
                     if (typeof options.onMessage === 'function') {

@@ -131,7 +131,7 @@
                 cleanServiceEvent.ClusterName = incident.ClusterName;
                 cleanServiceEvent.Name = incident.Name;
                 cleanServiceEvent.Version = incident.Version;
-                cleanServiceEvent.Time = incident.EndTime;
+                cleanServiceEvent.Time = incident.StartTime;
                 cleanServiceEvent.EndTime = incident.EndTime;
                 cleanServiceEvent.StartTime = incident.StartTime;
                 cleanServiceEvent.DeploymentId = incident.ID;

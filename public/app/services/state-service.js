@@ -11,10 +11,19 @@
 		var deployments = {};
 		var events = [];
 
+		var self = this
+
 		return {
 			events: events,
 			services: services,
 			deployments: deployments,
+
+			addDeployment: function(deploy) {
+				if (deployments[name] == null) {
+					deployments[name] = {};
+				}
+				deployments[name][deploy.ID] = deploy;
+			},
 
 			run: function() {
 				$http({
@@ -34,6 +43,7 @@
 					}).then(function(response) {
 						_.each(response.data, function(service, name) {
 							_.each(service, function(deploy) {
+								// TODO this should call addDeployment but scope...
 								if (deployments[name] == null) {
 									deployments[name] = {};
 								}
