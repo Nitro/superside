@@ -27,21 +27,11 @@
     .filter('statusStr', function() {
         return function(status) {
 
-            var statusStr = '';
-
             switch (status) {
-                case 0:
-                    statusStr += "Alive";
-                    break;
-                case 2:
-                    statusStr += "Unhealthy";
-                    break;
-                case 3:
-                    statusStr += "Unknown";
-                    break;
-                default:
-                    statusStr += "Tombstone";
-                    break
+                case 0: return "Alive";
+                case 2: return "Unhealthy";
+                case 3: return "Unknown";
+                default: return "Tombstone";
             }
 
             return statusStr
@@ -101,12 +91,12 @@
     .filter('uiEvent', function($filter) {
 
         return function(incident) {
-		console.log(incident);
 
             var cleanServiceEvent = {
                 Name: null,
                 Version: null,
                 ClusterName: null,
+				Hostname: null,
                 Type: null,
                 Time: null,
                 StartTime: null,
@@ -126,6 +116,7 @@
 				cleanServiceEvent.Status = $filter('statusStr')(service.Status);
 				cleanServiceEvent.StatusCode = service.Status;
                 cleanServiceEvent.Time = incident.Event.Time;
+                cleanServiceEvent.Hostname = service.Hostname;
             } else {
                 cleanServiceEvent.Type = 'Deployment';
                 cleanServiceEvent.ClusterName = incident.ClusterName;

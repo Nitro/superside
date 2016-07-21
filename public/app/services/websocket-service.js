@@ -54,7 +54,6 @@
 
                 // Show a disconnected message when the WebSocket is closed.
                 socket.onclose = function(event) {
-
                     if (typeof options.onClose === 'function') {
                         options.onClose(event);
                     }
