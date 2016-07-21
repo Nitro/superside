@@ -6,7 +6,8 @@
     font-size: large;
   }
   .pct50 {
-	width: 50%;
+	width: 49%;
+    display: inline-block;
   }
   .panel-heading {
      padding: 5px 15px;
@@ -82,9 +83,11 @@
   <div class="panel panel-default">
     <div class="panel-heading"><h4>{{ name }}</h4></div>
     <div class="panel-body larger">
-      <div class="pct50 bold" style="display: inline-block;" ng-repeat-start="(envName, data) in service">{{ envName }} {{ data.Version }}</div>
-      <div>{{ data.EndTime | timeAgo }}</div>
-	  <br ng-repeat-end />
+      <div ng-repeat-start="(envName, data) in service">
+          <span class="pct50 bold">{{ envName }} {{ data.Version }}</span>
+          <span class="pct50" style="text-align: right">{{ data.EndTime | timeAgo }}</span>
+      </div>
+      <br ng-repeat-end />
     </div>
   </div>
 </div>
