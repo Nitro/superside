@@ -52,9 +52,9 @@
 							});
 						});
 
-						events = _.sortBy(events, function(evt) {
-							if (evt.StartTime != null) { return evt.StartTime };
-							return evt.Time;
+						events.sort(function(evt1, evt2) {
+							if (evt1.sortCode() < evt2.sortCode()) return -1;
+							return 1;
 						});
 
 					}, function (error) {
