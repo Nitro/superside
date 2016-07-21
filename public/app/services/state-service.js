@@ -12,19 +12,16 @@
 		var events = [];
 
         var addDeployment = function(deploy) {
-            if (deployments[name] == null) {
-                deployments[name] = {};
-            }
+			deployments[name] = deployments[name] || {};
             deployments[name][deploy.ID] = deploy;
             updateServiceVersion(deploy);
         };
 
-        var updateServiceVersion = function(event) {
-            services[event.Name] = services[event.Name] || {};
-            services[event.Name][event.ClusterName] = services[event.Name][event.ClusterName] || {};
-
-            services[event.Name][event.ClusterName].Version = event.Version;
-            services[event.Name][event.ClusterName].Time = event.Time;
+        var updateServiceVersion = function(deploy) {
+            services[deploy.Name] = services[deploy.Name] || {};
+            services[deploy.Name][deploy.ClusterName] = services[deploy.Name][deploy.ClusterName] || {};
+            services[deploy.Name][deploy.ClusterName].Version = deploy.Version;
+            services[deploy.Name][deploy.ClusterName].EndTime = deploy.EndTime;
         };
 
 		return {

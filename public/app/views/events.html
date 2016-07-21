@@ -2,6 +2,31 @@
   .bold {
     font-weight: bold;
   }
+  .larger {
+    font-size: large;
+  }
+  .pct50 {
+	width: 50%;
+  }
+  .panel-heading {
+     padding: 5px 15px;
+  }
+  h4 {
+     margin-top: 5px;
+     margin-bottom: 5px;
+  }
+  .table {
+     margin-bottom: 5px;
+  }
+  body {
+      width: 100%;
+  }
+  table {
+     table-layout: fixed;
+  }
+  .align-right {
+	text-align: right;
+  }
 </style>
 <div class="col-md-6">
   <div class="panel panel-primary">
@@ -10,19 +35,18 @@
       <table class="table">
         <tr>
             <th>Cluster</th>
-            <th>Name / Host</th><th>Version</th><th>When</th>
-          <th>Previous Status</th><th>New Status</th><!--<th>Type</th>-->
+            <th>Name / Host</th><th class="align-right">Version</th><th>When</th>
+          <th>Previous Status</th><th>New Status</th>
         </tr>
         <tr ng-repeat="event in eventsCtrl.events | orderBy:'Time':true"
             ng-class="{'success': event.StatusCode == 0, 'warning': event.StatusCode == 1, 'danger': event.StatusCode == 2 }" ng-class="{'bold': event.Type == 'Deployment'}">
           <td ng-class="{'bold': event.Type == 'Deployment'}">{{ event.ClusterName }}</td>
           <td ng-class="{'bold': event.Type == 'Deployment'}">{{ event.Name }}<br/>{{ event.Hostnames[0] }}</td>
-          <td ng-class="{'bold': event.Type == 'Deployment'}">{{ event.Version }}</td>
+          <td class="align-right" ng-class="{'bold': event.Type == 'Deployment'}">{{ event.Version }}</td>
           <td>{{ event.Time | date : 'MMM d H:mm:ss.sss' : 'UTC' }}</td>
           <td>{{ event.PreviousStatus }}</td>
           <td ng-if="event.Type == 'Deployment'" class="bold">Deploy</td>
           <td ng-if="event.Type == 'ServiceEvent'">{{ event.Status }}</td>
-          <!--<td ng-class="{'bold': event.Type == 'Deployment'}">{{ event.Type }}</td>-->
         </tr>
       </table>
     </div>
@@ -36,15 +60,17 @@
     <div class="panel-body">
       <table ng-repeat="service in eventsCtrl.deployments" in class="table">
         <tr>
-            <th>Name</th><th>Version</th><th>Start Time</th><th>End Time</th>
+            <th>Cluster</th><th>Name</th><th style="text-align: right;">Version</th>
+			<th>Start Time</th><th>End Time</th>
             <th>Hosts</th>
         </tr>
         <tr ng-repeat="deploy in service ">
+          <td class="bold">{{ deploy.ClusterName }}</td>
           <td>{{ deploy.Name }}</td>
-          <td>{{ deploy.Version }}</td>
+          <td class="align-right">{{ deploy.Version }}</td>
           <td>{{ deploy.StartTime | date : 'MMM d H:mm:ss.sss' : 'UTC' }}</td>
           <td>{{ deploy.EndTime | date : 'MMM d H:mm:ss.sss' : 'UTC' }}</td>
-          <td>{{ deploy.Hostnames.length }}</td>
+          <td class="bold align-right">{{ deploy.Hostnames.length }}</td>
         </tr>
       </table>
     </div>
@@ -52,26 +78,13 @@
   </div>
 </div>
 
-<div class="col-md-3">
-    <div class="panel panel-primary">
-        <div class="panel-heading"><h4>Services</h4></div>
-        <div class="panel-body">
-            <table ng-repeat="(service, cluster) in eventsCtrl.services" class="table">
-                <!--<tr>-->
-                    <!--<th>Name</th><th>Version</th><th>Start Time</th><th>End Time</th>-->
-                    <!--<th>Hosts</th>-->
-                <!--</tr>-->
-                <!--<tr ng-repeat="deploy in service ">-->
-                    <!--<td>{{ deploy.Name }}</td>-->
-                    <!--<td>{{ deploy.Version }}</td>-->
-                    <!--<td>{{ deploy.StartTime | date : 'MMM d H:mm:ss.sss' : 'UTC' }}</td>-->
-                    <!--<td>{{ deploy.EndTime | date : 'MMM d H:mm:ss.sss' : 'UTC' }}</td>-->
-                    <!--<td>{{ deploy.Hostnames.length }}</td>-->
-                <!--</tr>-->
-
-                {{service}}
-            </table>
-        </div>
+<div ng-repeat="(name, service) in eventsCtrl.services" class="col-md-3">
+  <div class="panel panel-default">
+    <div class="panel-heading"><h4>{{ name }}</h4></div>
+    <div class="panel-body larger">
+      <div class="pct50 bold" style="display: inline-block;" ng-repeat-start="(envName, data) in service">{{ envName }} {{ data.Version }}</div>
+      <div>{{ data.EndTime | timeAgo }}</div>
+	  <br ng-repeat-end />
     </div>
-</div>
+  </div>
 </div>
