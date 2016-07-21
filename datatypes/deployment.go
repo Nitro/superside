@@ -19,6 +19,7 @@ type Deployment struct {
 	Version     string
 	Image       string
 	ClusterName string
+	Hostnames   []string
 }
 
 func (d *Deployment) Matches(other *Deployment) bool {
@@ -31,6 +32,20 @@ func (d *Deployment) Matches(other *Deployment) bool {
 		other.Name == d.Name &&
 		other.ClusterName == d.ClusterName &&
 		timeDiff < DEPLOYMENT_CUTOFF
+}
+
+func (d *Deployment) Aggregate(other *Deployment) {
+	if other.StartTime.Before(d.StartTime) {
+		d.StartTime = other.StartTime
+	}
+
+	if d.EndTime.Before(other.EndTime) {
+		d.EndTime = other.EndTime
+	}
+
+	// Dupes are desirable here... we might deploy more than once on
+	// the same host.
+	d.Hostnames = append(d.Hostnames, other.Hostnames...)
 }
 
 // Construct a deployment object from a datatypes object
@@ -50,5 +65,6 @@ func DeploymentFromNotification(notice *Notification) *Deployment {
 		Version:     strings.Split(evt.Service.Image, ":")[1],
 		Image:       evt.Service.Image,
 		ClusterName: notice.ClusterName,
+		Hostnames:   []string{evt.Service.Hostname},
 	}
 }

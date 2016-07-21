@@ -122,15 +122,7 @@ func (t *Tracker) processOneDeployment(notice *datatypes.Notification) {
 
 		if lastDeploy.Matches(thisDeploy) {
 			log.Debug("Found matching deployment: ", lastDeploy)
-
-			if thisDeploy.StartTime.Before(lastDeploy.StartTime) {
-				lastDeploy.StartTime = thisDeploy.StartTime
-			}
-
-			if lastDeploy.EndTime.Before(thisDeploy.EndTime) {
-				lastDeploy.EndTime = thisDeploy.EndTime
-			}
-
+			lastDeploy.Aggregate(thisDeploy)      // Update with new hosts
 			t.tellDeploymentListeners(lastDeploy) // Send the updated original
 			return
 		}

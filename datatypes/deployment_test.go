@@ -59,3 +59,38 @@ func Test_DeploymentFromNotification(t *testing.T) {
 		So(deploy.Version, ShouldEqual, "0.1")
 	})
 }
+
+func Test_Aggregate(t *testing.T) {
+	Convey("Aggregate()", t, func() {
+		baseTime := time.Now().UTC()
+
+		thisDeploy := &Deployment{
+			ID:          "marechalfoch",
+			Name:        "awesome-svc",
+			StartTime:   baseTime.Add(-1*time.Second),
+			EndTime:     baseTime,
+			Version:     "0.2",
+			Image:       "awesome-svc:0.2",
+			ClusterName: "awesome-cluster",
+			Hostnames:   []string{"toulouse"},
+		}
+
+		thatDeploy := *thisDeploy
+		thatDeploy.Hostnames = []string{"bordeaux"}
+		thatDeploy.StartTime = baseTime.Add(-5*time.Second)
+		thatDeploy.EndTime = baseTime.Add(5*time.Second)
+
+		Convey("Updates the start and end times", func() {
+			thisDeploy.Aggregate(&thatDeploy)
+			So(thisDeploy.StartTime, ShouldResemble, baseTime.Add(-5*time.Second))
+			So(thisDeploy.EndTime, ShouldResemble, baseTime.Add(5*time.Second))
+		})
+
+		Convey("Aggregates hostnames", func() {
+			thisDeploy.Aggregate(&thatDeploy)
+
+			So(thisDeploy.Hostnames, ShouldResemble, []string{"toulouse", "bordeaux"})
+		})
+
+	})
+}
