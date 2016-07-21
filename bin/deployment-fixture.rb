@@ -22,6 +22,8 @@ fixture = File.expand_path(opts[:fixture], __FILE__)
 data = JSON.parse(File.read(fixture))
 
 data.each do |event|
+  event['Event']['Service']['Hostname'] = %w{ host1 host2 host3 host4 }.shuffle.first
+
   data =  JSON.pretty_generate(state_blob.merge({
     'ChangeEvent' => {
       'Service' => event['Event']['Service'],

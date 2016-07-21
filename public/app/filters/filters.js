@@ -96,7 +96,7 @@
                 Name: null,
                 Version: null,
                 ClusterName: null,
-				Hostname: null,
+				Hostnames: null,
                 Type: null,
                 Time: null,
                 StartTime: null,
@@ -116,7 +116,7 @@
 				cleanServiceEvent.Status = $filter('statusStr')(service.Status);
 				cleanServiceEvent.StatusCode = service.Status;
                 cleanServiceEvent.Time = incident.Event.Time;
-                cleanServiceEvent.Hostname = service.Hostname;
+                cleanServiceEvent.Hostnames = [service.Hostname];
             } else {
                 cleanServiceEvent.Type = 'Deployment';
                 cleanServiceEvent.ClusterName = incident.ClusterName;
@@ -126,6 +126,7 @@
                 cleanServiceEvent.EndTime = incident.EndTime;
                 cleanServiceEvent.StartTime = incident.StartTime;
                 cleanServiceEvent.DeploymentId = incident.ID;
+                cleanServiceEvent.Hostnames = incident.Hostnames;
 
             }
 
