@@ -91,10 +91,6 @@
     .filter('uiEvent', function($filter) {
 
         return function(incident) {
-			var sortBy = function() {
-				if (this.StartTime != null) { return this.StartTime };
-				return this.Time;
-			};
 
             var cleanServiceEvent = {
                 Name: null,
@@ -106,8 +102,7 @@
                 StartTime: null,
                 EndTime: null,
                 DeploymentId: null,
-				StatusCode: null,
-				sortCode: sortBy
+				StatusCode: null
             };
 
             if (incident.hasOwnProperty('Event')) {

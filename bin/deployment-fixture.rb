@@ -12,31 +12,29 @@ end
 
 connection = Excon.new(opts[:url])
 
-state_blob = {
-  'State' => {
-    'ClusterName' => 'nitro-dev',
-    'Hostname' => 'awesome-host'
-  }
-}
-
 fixture = File.expand_path(opts[:fixture], __FILE__)
 data = JSON.parse(File.read(fixture))
 
-data.each do |event|
-  sleep opts[:sleep]
-  event['Event']['Service']['Hostname'] = %w{ host1 host2 host3 host4 }.shuffle.first
+%w{ nitro-dev nitro-prod }.shuffle.each do |clustername|
+    data.each do |event|
+      sleep opts[:sleep]
+      event['Event']['Service']['Hostname'] = %w{ host1 host2 host3 host4 }.shuffle.first
 
-  data =  JSON.pretty_generate(state_blob.merge({
-    'ChangeEvent' => {
-      'Service' => event['Event']['Service'],
-      'PreviousStatus' => event['Event']['PreviousStatus'],
-      'Time' => event['Event']['Time']
-    }
-  }))
+      json_data = JSON.pretty_generate(
+        'State' => {
+          'ClusterName' => clustername
+        },
+        'ChangeEvent' => {
+          'Service' => event['Event']['Service'],
+          'PreviousStatus' => event['Event']['PreviousStatus'],
+          'Time' => event['Event']['Time']
+        }
+      )
 
-  connection.post(
-    :body => data,
-    :headers => { 'Content-type' => 'application/json' },
-    :persistent => true
-  )
+      connection.post(
+        :body => json_data,
+        :headers => { 'Content-type' => 'application/json' },
+        :persistent => true
+      )
+    end
 end

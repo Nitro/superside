@@ -37,12 +37,15 @@
                 // Handle messages sent by the server.
                 socket.onmessage = function(event) {
                     var message = event.data;
-					var evt = angular.fromJson(message)
-					stateService.events.push($filter('uiEvent')(evt.Data))
+					var evt = angular.fromJson(message);
+					stateService.events.push($filter('uiEvent')(evt.Data));
 
-					if (evt.Type == 'ServiceEvent') {
-						stateService.services.push(evt.Data)
-					} else if(evt.Type == 'Deployment') {
+
+
+					//if (evt.Type == 'ServiceEvent') {
+					//	stateService.services.push(evt.Data)
+					//} else if(evt.Type == 'Deployment') {
+					if(evt.Type == 'Deployment') {
 						stateService.addDeployment(evt.Data)
 					}
 
