@@ -18,6 +18,7 @@
   }
   .table {
      margin-bottom: 5px;
+	 font-size: 15px;
   }
   body {
       width: 100%;
@@ -79,11 +80,11 @@
   </div>
 </div>
 
-<div ng-repeat="(name, service) in eventsCtrl.services" class="col-md-3">
+<div ng-repeat="(name, clusters) in eventsCtrl.services" class="col-md-3">
   <div class="panel panel-default">
     <div class="panel-heading"><h4>{{ name }}</h4></div>
-    <div class="panel-body larger">
-      <div ng-repeat-start="(envName, data) in service">
+    <div class="panel-body larger" ng-class="eventsCtrl.getVersionMatchStatus(name)">
+      <div ng-repeat-start="(envName, data) in clusters">
           <span class="pct50 bold">{{ envName }} {{ data.Version }}</span>
           <span class="pct50" style="text-align: right">{{ data.EndTime | timeAgo }}</span>
       </div>
