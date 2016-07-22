@@ -1,19 +1,23 @@
 package tracker
 
 import (
+	"encoding/json"
 	"sync"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/newrelic/sidecar/catalog"
 	"github.com/newrelic/sidecar/service"
 	"github.com/nitro/superside/circular"
 	"github.com/nitro/superside/datatypes"
+	"github.com/nitro/superside/persistence"
 )
 
 const (
 	INITIAL_RING_SIZE       = 500 // We'll track 500 service events globally
 	CHANNEL_BUFFER_SIZE     = 25
 	INITIAL_DEPLOYMENT_SIZE = 20
+	PERSISTENCE_INTERVAL    = 30 * time.Second
 )
 
 type Tracker struct {
@@ -22,15 +26,22 @@ type Tracker struct {
 	svcEventsListeners  []chan *datatypes.Notification
 	deploymentListeners []chan *datatypes.Deployment
 	listenLock          sync.Mutex
+	stateLock           sync.Mutex
 	deployments         map[string]*circular.DeploymentsBuffer
+	store               persistence.Store
 }
 
-func NewTracker(svcEventsRingSize int) *Tracker {
-	return &Tracker{
+func NewTracker(svcEventsRingSize int, store persistence.Store) *Tracker {
+	tracker := &Tracker{
 		svcEventsChan: make(chan catalog.StateChangedEvent, CHANNEL_BUFFER_SIZE),
 		svcEvents:     circular.NewSvcEventsBuffer(svcEventsRingSize),
 		deployments:   make(map[string]*circular.DeploymentsBuffer, INITIAL_DEPLOYMENT_SIZE),
+		store:         store,
 	}
+
+	tracker.loadState()
+
+	return tracker
 }
 
 // Enqueue an update to the channel. Rely on channel buffer. We block if channel is full
@@ -174,6 +185,9 @@ func (t *Tracker) processDeployments() {
 
 // Add a new deployment, also announce it to listeners
 func (t *Tracker) insertDeployment(deploy *datatypes.Deployment) {
+	t.stateLock.Lock()
+	defer t.stateLock.Unlock()
+
 	if t.deployments[deploy.Name] == nil {
 		t.deployments[deploy.Name] = circular.NewDeploymentsBuffer(INITIAL_DEPLOYMENT_SIZE)
 	}
@@ -194,12 +208,87 @@ func (t *Tracker) GetDeployments() map[string][]*datatypes.Deployment {
 	return allDeploys
 }
 
+// Flush the state out to the store
+func (t *Tracker) persist() {
+	events, err := json.Marshal(t.svcEvents.AllRaw())
+	deploys, err2 := json.Marshal(t.GetDeployments())
+
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	if err2 != nil {
+		log.Error(err2.Error())
+		return
+	}
+
+	// We need a consistent view here... so lock state before writing
+	t.stateLock.Lock()
+	t.store.StoreBlob("SupersideEvents", events)
+	t.store.StoreBlob("SupersideDeployments", deploys)
+	t.stateLock.Unlock()
+}
+
+// Load state from the store
+func (t *Tracker) loadState() {
+	eventsJson, err := t.store.GetBlob("SupersideEvents")
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	deploysJson, err := t.store.GetBlob("SupersideDeployments")
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	var events []catalog.StateChangedEvent
+	if len(eventsJson) > 0 {
+		err = json.Unmarshal(eventsJson, &events)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		for _, evt := range events {
+			t.svcEvents.Insert(evt)
+		}
+	}
+
+	var deploys []datatypes.Deployment
+	if len(deploysJson) > 0 {
+		err = json.Unmarshal(deploysJson, &deploys)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		for _, deploy := range deploys {
+			t.insertDeployment(&deploy)
+		}
+	}
+}
+
+// Loop forever, persisting data to store
+func (t *Tracker) ManagePersistence() {
+	for {
+		select {
+		case <-time.After(PERSISTENCE_INTERVAL):
+			t.persist()
+		}
+	}
+}
+
 // Linearize the updates coming in from the async HTTP handler
 func (t *Tracker) ProcessUpdates() {
 	go t.processDeployments()
 
 	for evt := range t.svcEventsChan {
+		t.stateLock.Lock() // We'll call this a lot but there should be very little contention
 		t.svcEvents.Insert(evt)
+		t.stateLock.Unlock()
 		t.tellSvcEventListeners(&evt)
 	}
 }

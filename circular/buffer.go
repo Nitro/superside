@@ -34,6 +34,19 @@ func (b *SvcEventsBuffer) All() []datatypes.Notification {
 	return changeHistory
 }
 
+func (b *SvcEventsBuffer) AllRaw() []catalog.StateChangedEvent {
+	var changeHistory []catalog.StateChangedEvent
+	b.changes.Do(func(evt interface{}) { // Start from oldest node
+		if evt == nil {
+			return
+		}
+		event := evt.(catalog.StateChangedEvent)
+		changeHistory = append(changeHistory, event)
+	})
+
+	return changeHistory
+}
+
 func (b *SvcEventsBuffer) Insert(evt catalog.StateChangedEvent) {
 	b.changes.Value = evt
 	b.changes = b.changes.Next()

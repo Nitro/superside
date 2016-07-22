@@ -164,6 +164,45 @@
 			"ImportPath": "gopkg.in/alecthomas/kingpin.v1",
 			"Comment": "v1.3.7",
 			"Rev": "45f9714aa86a9624491adeaab1e9df1baf84dd38"
+		},
+		{
+			"ImportPath": "gopkg.in/bsm/ratelimit.v1",
+			"Rev": "db14e161995a5177acef654cb0dd785e8ee8bc22"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v4",
+			"Comment": "v4.1.0",
+			"Rev": "bc66ed0ebaa2b2a5f55935d45265b6885e2b22ff"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v4/internal",
+			"Comment": "v4.1.0",
+			"Rev": "bc66ed0ebaa2b2a5f55935d45265b6885e2b22ff"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v4/internal/consistenthash",
+			"Comment": "v4.1.0",
+			"Rev": "bc66ed0ebaa2b2a5f55935d45265b6885e2b22ff"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v4/internal/errors",
+			"Comment": "v4.1.0",
+			"Rev": "bc66ed0ebaa2b2a5f55935d45265b6885e2b22ff"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v4/internal/hashtag",
+			"Comment": "v4.1.0",
+			"Rev": "bc66ed0ebaa2b2a5f55935d45265b6885e2b22ff"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v4/internal/pool",
+			"Comment": "v4.1.0",
+			"Rev": "bc66ed0ebaa2b2a5f55935d45265b6885e2b22ff"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v4/internal/proto",
+			"Comment": "v4.1.0",
+			"Rev": "bc66ed0ebaa2b2a5f55935d45265b6885e2b22ff"
 		}
 	]
 }

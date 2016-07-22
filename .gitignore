@@ -7,3 +7,4 @@ docker/templates
 public/app/bower_components/
 public/node_modules/
 public/npm-debug.log
+data/
