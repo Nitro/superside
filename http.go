@@ -84,6 +84,7 @@ func updateHandler(response http.ResponseWriter, req *http.Request) {
 	err = json.Unmarshal(data, &evt)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
+		log.Error(err.Error())
 		return
 	}
 
