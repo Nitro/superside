@@ -1,123 +1,161 @@
 <style>
-  .bold {
-    font-weight: bold;
-  }
-  .larger {
-    font-size: large;
-  }
-  .pct50 {
-	width: 49%;
-    display: inline-block;
-  }
-  .panel-heading {
-     padding: 5px 15px;
-  }
-  h4 {
-     margin-top: 5px;
-     margin-bottom: 5px;
-  }
-  .table {
-     margin-bottom: 5px;
-	 font-size: 15px;
-  }
-  body {
-      width: 100%;
-  }
-  table {
-     table-layout: fixed;
-  }
-  .align-right {
-	text-align: right;
-  }
-  label {
-    margin-left: 20px;
-  }
+    .bold {
+        font-weight: bold;
+    }
+
+    .larger {
+        font-size: large;
+    }
+
+    .pct50 {
+        width: 49%;
+        display: inline-block;
+    }
+
+    .panel-heading {
+        padding: 5px 15px;
+    }
+
+    .panel-body {
+        max-height: 800px;
+        overflow: auto;
+    }
+
+    .filters {
+        padding-top: 15px;
+    }
+
+    h4 {
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+
+    .table {
+        margin-bottom: 5px;
+        font-size: 15px;
+    }
+
+    body {
+        width: 100%;
+    }
+
+    table {
+        table-layout: fixed;
+    }
+
+    .align-right {
+        text-align: right;
+    }
+
+    label {
+        margin-left: 20px;
+    }
 </style>
 <div class="col-md-6">
-  <div class="panel panel-primary">
-    <div class="panel-heading"><h4>All Events</h4></div>
+    <div class="panel panel-primary">
+        <div class="panel-heading"><h4>All Events</h4></div>
 
-    <label> Cluster: </label>
-    <select ng-model="eventsCtrl.filters.events.cluster">
-      <option value="">All</option>
-      <option ng-repeat="(clusterName, cluster) in eventsCtrl.clusters" value="{{clusterName}}">{{clusterName}}</option>
-    </select>
+        <div class="filters">
+            <label> Cluster: </label>
+            <select ng-model="eventsCtrl.filters.events.cluster">
+                <option value="">All</option>
+                <option ng-repeat="(clusterName, cluster) in eventsCtrl.clusters" value="{{clusterName}}">
+                    {{clusterName}}
+                </option>
+            </select>
 
-    <label> Service: </label>
-    <select ng-model="eventsCtrl.filters.events.service">
-      <option value="">All</option>
-      <option ng-repeat="(serviceName, clusters) in eventsCtrl.services" value="{{serviceName}}">{{serviceName}}</option>
-    </select>
 
-    <div class="panel-body">
-      <table class="table">
-        <tr>
-            <th>Cluster</th>
-            <th>Name / Host</th><th class="align-right">Version</th><th>When</th>
-          <th>Previous Status</th><th>New Status</th>
-        </tr>
-        <tr ng-repeat="event in eventsCtrl.events | eventsFilter:eventsCtrl.filters.events | orderBy:'Time':true "
-            ng-class="{'success': event.StatusCode == 0, 'warning': event.StatusCode == 1, 'danger': event.StatusCode == 2 }" ng-class="{'bold': event.Type == 'Deployment'}">
-          <td ng-class="{'bold': event.Type == 'Deployment'}">{{ event.ClusterName }}</td>
-          <td ng-class="{'bold': event.Type == 'Deployment'}">{{ event.Name }}<br/>{{ event.Hostnames[0] }}</td>
-          <td class="align-right" ng-class="{'bold': event.Type == 'Deployment'}">{{ event.Version }}</td>
-          <td>{{ event.Time | date : 'MMM d H:mm:ss.sss' : 'UTC' }}</td>
-          <td>{{ event.PreviousStatus }}</td>
-          <td ng-if="event.Type == 'Deployment'" class="bold">Deploy</td>
-          <td ng-if="event.Type == 'ServiceEvent'">{{ event.Status }}</td>
-        </tr>
-      </table>
+            <label> Service: </label>
+            <select ng-model="eventsCtrl.filters.events.service">
+                <option value="">All</option>
+                <option ng-repeat="(serviceName, clusters) in eventsCtrl.services" value="{{serviceName}}">
+                    {{serviceName}}
+                </option>
+            </select>
+        </div>
+
+        <div class="panel-body">
+            <table class="table">
+                <tr>
+                    <th>Cluster</th>
+                    <th>Name / Host</th>
+                    <th class="align-right">Version</th>
+                    <th>When</th>
+                    <th>Previous Status</th>
+                    <th>New Status</th>
+                </tr>
+                <tr ng-repeat="event in eventsCtrl.events | eventsFilter:eventsCtrl.filters.events | orderBy:'Time':true "
+                    ng-class="{'success': event.StatusCode == 0, 'warning': event.StatusCode == 1, 'danger': event.StatusCode == 2 }"
+                    ng-class="{'bold': event.Type == 'Deployment'}">
+                    <td ng-class="{'bold': event.Type == 'Deployment'}">{{ event.ClusterName }}</td>
+                    <td ng-class="{'bold': event.Type == 'Deployment'}">{{ event.Name }}<br/>{{ event.Hostnames[0] }}
+                    </td>
+                    <td class="align-right" ng-class="{'bold': event.Type == 'Deployment'}">{{ event.Version }}</td>
+                    <td>{{ event.Time | date : 'MMM d H:mm:ss.sss' : 'UTC' }}</td>
+                    <td>{{ event.PreviousStatus }}</td>
+                    <td ng-if="event.Type == 'Deployment'" class="bold">Deploy</td>
+                    <td ng-if="event.Type == 'ServiceEvent'">{{ event.Status }}</td>
+                </tr>
+            </table>
+        </div>
     </div>
-    </div>
-  </div>
 </div>
 
 <div class="col-md-6">
-  <div class="panel panel-primary">
-    <div class="panel-heading"><h4>Deployments</h4></div>
+    <div class="panel panel-primary">
+        <div class="panel-heading"><h4>Deployments</h4></div>
 
-    <label> Cluster: </label>
-    <select ng-model="eventsCtrl.filters.deployments.cluster">
-      <option value="">All</option>
-      <option ng-repeat="(clusterName, cluster) in eventsCtrl.clusters" value="{{clusterName}}">{{clusterName}}</option>
-    </select>
+        <div class="filters">
+            <label> Cluster: </label>
+            <select ng-model="eventsCtrl.filters.deployments.cluster">
+                <option value="">All</option>
+                <option ng-repeat="(clusterName, cluster) in eventsCtrl.clusters" value="{{clusterName}}">
+                    {{clusterName}}
+                </option>
+            </select>
 
-    <label> Service: </label>
-    <select ng-model="eventsCtrl.filters.deployments.service">
-      <option value="">All</option>
-      <option ng-repeat="(serviceName, clusters) in eventsCtrl.services" value="{{serviceName}}">{{serviceName}}</option>
-    </select>
+            <label> Service: </label>
+            <select ng-model="eventsCtrl.filters.deployments.service">
+                <option value="">All</option>
+                <option ng-repeat="(serviceName, clusters) in eventsCtrl.services" value="{{serviceName}}">
+                    {{serviceName}}
+                </option>
+            </select>
+        </div>
 
-    <div class="panel-body">
-      <table ng-repeat="service in eventsCtrl.deployments" in class="table">
-        <tr>
-            <th>Cluster</th><th>Name</th><th class="align-right">Version</th>
-			<th>Start Time</th><th>End Time</th>
-            <th class="align-right">Hosts</th>
-        </tr>
-        <tr ng-repeat="deploy in service | eventsFilter:eventsCtrl.filters.deployments">
-          <td class="bold">{{ deploy.ClusterName }}</td>
-          <td>{{ deploy.Name }}</td>
-          <td class="align-right">{{ deploy.Version }}</td>
-          <td>{{ deploy.StartTime | date : 'MMM d H:mm:ss.sss' : 'UTC' }}</td>
-          <td>{{ deploy.EndTime | date : 'MMM d H:mm:ss.sss' : 'UTC' }}</td>
-          <td class="bold align-right">{{ deploy.Hostnames.length }}</td>
-        </tr>
-      </table>
+        <div class="panel-body deployments">
+            <table ng-repeat="service in eventsCtrl.deployments" in class="table">
+                <tr>
+                    <th>Cluster</th>
+                    <th>Name</th>
+                    <th class="align-right">Version</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th class="align-right">Hosts</th>
+                </tr>
+                <tr ng-repeat="deploy in service | eventsFilter:eventsCtrl.filters.deployments">
+                    <td class="bold">{{ deploy.ClusterName }}</td>
+                    <td>{{ deploy.Name }}</td>
+                    <td class="align-right">{{ deploy.Version }}</td>
+                    <td>{{ deploy.StartTime | date : 'MMM d H:mm:ss.sss' : 'UTC' }}</td>
+                    <td>{{ deploy.EndTime | date : 'MMM d H:mm:ss.sss' : 'UTC' }}</td>
+                    <td class="bold align-right">{{ deploy.Hostnames.length }}</td>
+                </tr>
+            </table>
+        </div>
     </div>
-    </div>
-  </div>
+</div>
 </div>
 
 <div ng-repeat="(name, clusters) in eventsCtrl.services" class="col-md-3">
-  <div class="panel panel-default">
-    <div class="panel-heading"><h4>{{ name }}</h4></div>
-    <div class="panel-body larger" ng-class="eventsCtrl.getVersionMatchStatus(name)">
-      <div ng-repeat-start="(envName, data) in clusters">
-          <span class="pct50 bold">{{ envName }} {{ data.Version }}</span>
-          <span class="pct50" style="text-align: right">{{ data.EndTime | timeAgo }}</span>
-      </div>
-      <br ng-repeat-end />
+    <div class="panel panel-default">
+        <div class="panel-heading"><h4>{{ name }}</h4></div>
+        <div class="panel-body larger" ng-class="eventsCtrl.getVersionMatchStatus(name)">
+            <div ng-repeat-start="(envName, data) in clusters">
+                <span class="pct50 bold">{{ envName }} {{ data.Version }}</span>
+                <span class="pct50" style="text-align: right">{{ data.EndTime | timeAgo }}</span>
+            </div>
+            <br ng-repeat-end/>
+        </div>
     </div>
-  </div>
 </div>
