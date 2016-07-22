@@ -74,7 +74,7 @@
             </select>
         </div>
 
-        <div class="panel-body">
+        <div style="padding:0 15px;">
             <table class="table">
                 <tr>
                     <th>Cluster</th>
@@ -84,6 +84,10 @@
                     <th>Previous Status</th>
                     <th>New Status</th>
                 </tr>
+            </table>
+        </div>
+        <div class="panel-body">
+            <table class="table">
                 <tr ng-repeat="event in eventsCtrl.events | eventsFilter:eventsCtrl.filters.events | orderBy:'Time':true "
                     ng-class="{'success': event.StatusCode == 0, 'warning': event.StatusCode == 1, 'danger': event.StatusCode == 2 }"
                     ng-class="{'bold': event.Type == 'Deployment'}">
