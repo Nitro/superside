@@ -134,6 +134,32 @@
 
         }
 
+    })
+
+    .filter('eventsFilter', function (){
+
+        return function(events, filters) {
+            var filteredEvents = [];
+
+            if (filters.cluster === filters.service && filters.cluster === '') {
+                return events;
+            }
+
+            _.forEach(events, function (event) {
+
+                if ((filters.cluster === '' && filters.service === event.Name)
+                    || (filters.service === '' && filters.cluster === event.ClusterName)
+                    || (filters.service === event.Name && filters.cluster === event.ClusterName)) {
+
+                    filteredEvents.push(event);
+                }
+
+
+            });
+
+            return filteredEvents;
+        }
+
     });
 
     if ( ! Array.prototype.groupBy) {

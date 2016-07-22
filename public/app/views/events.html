@@ -29,10 +29,26 @@
   .align-right {
 	text-align: right;
   }
+  label {
+    margin-left: 20px;
+  }
 </style>
 <div class="col-md-6">
   <div class="panel panel-primary">
     <div class="panel-heading"><h4>All Events</h4></div>
+
+    <label> Cluster: </label>
+    <select ng-model="eventsCtrl.filters.cluster">
+      <option value="">All</option>
+      <option ng-repeat="(clusterName, cluster) in eventsCtrl.clusters" value="{{clusterName}}">{{clusterName}}</option>
+    </select>
+
+    <label> Service: </label>
+    <select ng-model="eventsCtrl.filters.service">
+      <option value="">All</option>
+      <option ng-repeat="(serviceName, clusters) in eventsCtrl.services" value="{{serviceName}}">{{serviceName}}</option>
+    </select>
+
     <div class="panel-body">
       <table class="table">
         <tr>
@@ -40,7 +56,7 @@
             <th>Name / Host</th><th class="align-right">Version</th><th>When</th>
           <th>Previous Status</th><th>New Status</th>
         </tr>
-        <tr ng-repeat="event in eventsCtrl.events | orderBy:'Time':true"
+        <tr ng-repeat="event in eventsCtrl.events | eventsFilter:eventsCtrl.filters | orderBy:'Time':true "
             ng-class="{'success': event.StatusCode == 0, 'warning': event.StatusCode == 1, 'danger': event.StatusCode == 2 }" ng-class="{'bold': event.Type == 'Deployment'}">
           <td ng-class="{'bold': event.Type == 'Deployment'}">{{ event.ClusterName }}</td>
           <td ng-class="{'bold': event.Type == 'Deployment'}">{{ event.Name }}<br/>{{ event.Hostnames[0] }}</td>

@@ -39,12 +39,8 @@
                     var message = event.data;
 					var evt = angular.fromJson(message);
 					stateService.events.push($filter('uiEvent')(evt.Data));
+                    stateService.addClusterName(filteredEvent);
 
-
-
-					//if (evt.Type == 'ServiceEvent') {
-					//	stateService.services.push(evt.Data)
-					//} else if(evt.Type == 'Deployment') {
 					if(evt.Type == 'Deployment') {
 						stateService.addDeployment(evt.Data)
 					}

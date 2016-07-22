@@ -12,6 +12,11 @@
 		self.events = stateService.events;
 		self.deployments = stateService.deployments;
         self.services = stateService.services;
+        self.clusters = stateService.clusters;
+        self.filters = {
+            cluster: '',
+            service: ''
+        };
 
 		stateService.run();
 
@@ -31,7 +36,7 @@
 			var clusters = stateService.services[svcName];
 			var groups = _.groupBy(clusters, function(cluster) {
 				return cluster.Version
-			})
+			});
 
 			// All versions matched, good to go
 			if (Object.keys(groups).length == 1) {
