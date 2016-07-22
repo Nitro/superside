@@ -11,6 +11,7 @@ opts = Trollop::options do
   opt :sleep,   'The number or decimal seconds to sleep between events', default: 0.3
   opt :service, 'The name of the service to deploy', type: String
   opt :cluster, 'The cluster to deploy the service into', type: String
+  opt :svc_version, 'The version to deploy', type: String
 end
 
 connection = Excon.new(opts[:url])
@@ -32,6 +33,11 @@ else
 end
 
 data = JSON.parse(File.read(fixture))
+
+puts opts[:svc_version]
+unless opts[:svc_version].nil? || opts[:svc_version].empty?
+  data = data.select { |e| e['Event']['Service']['Image'] =~ /#{opts[:svc_version]}/ }
+end
 
 clusternames.shuffle.each do |clustername|
   data.each do |event|
