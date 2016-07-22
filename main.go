@@ -8,6 +8,7 @@ import (
 
 type CliOpts struct {
 	ConfigFile *string
+	Persist    *bool
 }
 
 var state *tracker.Tracker
@@ -15,6 +16,7 @@ var state *tracker.Tracker
 func parseCommandLine() *CliOpts {
 	var opts CliOpts
 	opts.ConfigFile = kingpin.Flag("config-file", "The config file to use").Short('f').Default("superside.toml").String()
+	opts.Persist = kingpin.Flag("persist", "Do we persist and load data from the store?").Short('p').Default("true")
 	kingpin.Parse()
 	return &opts
 }
@@ -23,7 +25,12 @@ func main() {
 	opts := parseCommandLine()
 	config := parseConfig(*opts.ConfigFile)
 
-	store := persistence.NewFileStore("data/")
+	var store persistence.Store
+	if *opts.Persist {
+		store = persistence.NewFileStore("data/")
+	} else {
+		store = &persistence.NoopStore{}
+	}
 
 	state = tracker.NewTracker(tracker.INITIAL_RING_SIZE, store)
 	go state.ProcessUpdates()
