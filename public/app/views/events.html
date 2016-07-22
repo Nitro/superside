@@ -62,9 +62,9 @@
     <div class="panel-body">
       <table ng-repeat="service in eventsCtrl.deployments" in class="table">
         <tr>
-            <th>Cluster</th><th>Name</th><th style="text-align: right;">Version</th>
+            <th>Cluster</th><th>Name</th><th class="align-right">Version</th>
 			<th>Start Time</th><th>End Time</th>
-            <th>Hosts</th>
+            <th class="align-right">Hosts</th>
         </tr>
         <tr ng-repeat="deploy in service ">
           <td class="bold">{{ deploy.ClusterName }}</td>
