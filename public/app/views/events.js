@@ -14,8 +14,14 @@
         self.services = stateService.services;
         self.clusters = stateService.clusters;
         self.filters = {
-            cluster: '',
-            service: ''
+            events : {
+                cluster: '',
+                service: ''
+            },
+            deployments: {
+                cluster: '',
+                service: ''
+            }
         };
 
 		stateService.run();
