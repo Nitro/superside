@@ -3,27 +3,6 @@
 
     angular.module('superside.services')
 
-    .filter('portsStr', function() {
-        return function(svcPorts) {
-            var ports = [];
-            for (var i in svcPorts) {
-                var port = svcPorts[i];
-
-                if (port.Port == null) {
-                    continue;
-                }
-
-                if (port.ServicePort != null && port.ServicePort != 0) {
-                    ports.push(port.ServicePort.toString() + "->" + port.Port.toString());
-                } else {
-                    ports.push(port.Port.toString());
-                }
-            }
-
-            return ports.join(", ");
-        };
-    })
-
     .filter('statusStr', function() {
         return function(status) {
 
@@ -34,7 +13,6 @@
                 default: return "Tombstone";
             }
 
-            return statusStr
         }
     })
 
@@ -69,16 +47,6 @@
                 return interval + " mins ago";
             }
             return Math.floor(seconds) + " secs ago";
-        }
-    })
-
-    .filter('imageStr', function() {
-        return function(imageName) {
-            if (imageName.length < 25) {
-                return imageName;
-            }
-
-            return imageName.substr(imageName.length - 25, imageName.length);
         }
     })
 

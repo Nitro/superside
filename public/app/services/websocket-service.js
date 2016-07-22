@@ -38,7 +38,9 @@
                 socket.onmessage = function(event) {
                     var message = event.data;
 					var evt = angular.fromJson(message);
-					stateService.events.push($filter('uiEvent')(evt.Data));
+
+                    var filteredEvent = $filter('uiEvent')(evt.Data);
+					stateService.events.push(filteredEvent);
                     stateService.addClusterName(filteredEvent);
 
 					if(evt.Type == 'Deployment') {
