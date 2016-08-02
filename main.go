@@ -16,7 +16,7 @@ var state *tracker.Tracker
 func parseCommandLine() *CliOpts {
 	var opts CliOpts
 	opts.ConfigFile = kingpin.Flag("config-file", "The config file to use").Short('f').Default("superside.toml").String()
-	opts.Persist = kingpin.Flag("persist", "Do we persist and load data from the store?").Short('p').Default("true")
+	opts.Persist = kingpin.Flag("persist", "Do we persist and load data from the store?").Short('p').Default("true").Bool()
 	kingpin.Parse()
 	return &opts
 }

@@ -257,7 +257,7 @@ func (t *Tracker) loadState() {
 		}
 	}
 
-	var deploys []datatypes.Deployment
+	var deploys map[string][]datatypes.Deployment
 	if len(deploysJson) > 0 {
 		err = json.Unmarshal(deploysJson, &deploys)
 		if err != nil {
@@ -265,8 +265,10 @@ func (t *Tracker) loadState() {
 			return
 		}
 
-		for _, deploy := range deploys {
-			t.insertDeployment(&deploy)
+		for _, times := range deploys {
+			for _, deploy := range times {
+				t.insertDeployment(&deploy)
+			}
 		}
 	}
 }
