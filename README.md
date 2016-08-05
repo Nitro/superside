@@ -16,3 +16,7 @@ From the Superside console, you can see an ongoing stream of events in all of
 your environments, the most recent deployments tracked by environment and a
 little state panel showing the currently deployed versions of each of your
 services
+
+I recently did a short Youtube video on Superside and what it's for:
+
+[![Superside Youtube](images/SupersideYoutube.png)](https://youtu.be/L6fsPiZcK6g)
