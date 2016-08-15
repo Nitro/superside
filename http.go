@@ -10,8 +10,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/julienschmidt/httprouter"
 	"github.com/newrelic/sidecar/catalog"
 )
 
@@ -36,7 +36,7 @@ type ApiStatus struct {
 // The health check endpoint. Tells us if HAproxy is running and has
 // been properly configured. Since this is critical infrastructure this
 // helps make sure a host is not "down" by havign the proxy down.
-func healthHandler(response http.ResponseWriter, req *http.Request) {
+func healthHandler(response http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	defer req.Body.Close()
 	response.Header().Set("Content-Type", "application/json")
 
@@ -50,7 +50,7 @@ func healthHandler(response http.ResponseWriter, req *http.Request) {
 }
 
 // Returns the currently stored state as a JSON blob
-func servicesHandler(response http.ResponseWriter, req *http.Request) {
+func servicesHandler(response http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	defer req.Body.Close()
 	response.Header().Set("Content-Type", "application/json")
 
@@ -59,7 +59,7 @@ func servicesHandler(response http.ResponseWriter, req *http.Request) {
 }
 
 // Returns the currently stored state as a JSON blob
-func deploymentsHandler(response http.ResponseWriter, req *http.Request) {
+func deploymentsHandler(response http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	defer req.Body.Close()
 	response.Header().Set("Content-Type", "application/json")
 
@@ -68,7 +68,7 @@ func deploymentsHandler(response http.ResponseWriter, req *http.Request) {
 }
 
 // Receives POSTed state updates from Sidecar instances
-func updateHandler(response http.ResponseWriter, req *http.Request) {
+func updateHandler(response http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	defer req.Body.Close()
 	response.Header().Set("Content-Type", "application/json")
 
@@ -95,7 +95,7 @@ func updateHandler(response http.ResponseWriter, req *http.Request) {
 }
 
 // Handle the listening endpoint websocket
-func listenHandler(w http.ResponseWriter, r *http.Request) {
+func listenHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Error(err)
@@ -141,23 +141,27 @@ func listenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func uiRedirectHandler(response http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+    http.Redirect(response, req, "/ui/", 301)
+}
+
 // Start the HTTP server and begin handling requests. This is a
 // blocking call.
 func serveHttp(listenIp string, listenPort int) {
 	listenStr := fmt.Sprintf("%s:%d", listenIp, listenPort)
 
 	log.Infof("Starting up on %s", listenStr)
-	fs := http.FileServer(http.Dir("public/app/"))
-	router := mux.NewRouter()
 
-	router.HandleFunc("/api/update", updateHandler).Methods("POST")
-	router.HandleFunc("/health", healthHandler).Methods("GET")
-	router.HandleFunc("/api/state/services", servicesHandler).Methods("GET")
-	router.HandleFunc("/api/state/deployments", deploymentsHandler).Methods("GET")
-	router.HandleFunc("/listen", listenHandler).Methods("GET")
-	router.PathPrefix("/").Handler(fs)
+	router := httprouter.New()
+	router.GET("/", uiRedirectHandler)
+	router.POST("/api/update", updateHandler)
+	router.GET("/api/state/services", servicesHandler)
+	router.GET("/api/state/deployments", deploymentsHandler)
+	router.GET("/health", healthHandler)
+	router.GET("/listen", listenHandler)
+	router.ServeFiles("/ui/*filepath", http.Dir("public/app"))
+
 	http.Handle("/", handlers.LoggingHandler(os.Stdout, router))
-
 	err := http.ListenAndServe(listenStr, nil)
 	if err != nil {
 		log.Fatalf("Can't start http server: %s", err.Error())
