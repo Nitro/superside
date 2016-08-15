@@ -6,7 +6,7 @@ require 'trollop'
 require 'time'
 
 opts = Trollop::options do
-  opt :url,     'The URL to post updates to', default: 'http://localhost:7778/api/update'
+  opt :url,     'The URL to post updates to', default: 'http://localhost:7779/api/update'
   opt :fixture, 'The fixture to post', default: '../../fixtures/deployment-sample.json'
   opt :sleep,   'The number or decimal seconds to sleep between events', default: 0.3
   opt :service, 'The name of the service to deploy', type: String

@@ -36,7 +36,7 @@ func parseConfig(path string) *Config {
 	}
 
 	if config.Superside.BindPort == 0 {
-		config.Superside.BindPort = 7778
+		config.Superside.BindPort = 7779
 	}
 
 	configureLoggingLevel(config.Superside.LoggingLevel)

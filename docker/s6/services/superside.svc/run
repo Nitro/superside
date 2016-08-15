@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# stderr -> stdout
+exec 2>&1
+
+cd /superside
+
+if [[ -n "$SUPERSIDE_LOGGING_LEVEL" ]]; then
+    sed -i.bak 's/logging_level *= *"info"/logging_level = "'"$SUPERSIDE_LOGGING_LEVEL"'"/' superside.toml
+fi
+
+exec ./superside -f superside.toml

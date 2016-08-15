@@ -4,4 +4,4 @@
 
 IMAGE=$1
 echo "Starting from $IMAGE"
-docker run -i -t --label SidecarDiscover=false --net=host --name=haproxy-api $IMAGE
+docker run -i -t -p 7779:7779 $IMAGE

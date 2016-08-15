@@ -5,7 +5,8 @@ die() {
 	exit 1
 }
 
-file ../haproxy-api | grep "ELF.*LSB" || die "../haproxy-api is missing or not a Linux binary"
+file ../superside | grep "ELF.*LSB" || die "../superside is missing or not a Linux binary"
+test -f ../superside.toml || die "Missing superside.toml file!"
 
-test -f haproxy-api.toml || cp haproxy-api.docker.toml haproxy-api.toml
-cp ../haproxy-api . && cp -pr ../templates . && docker build -t haproxy-api . || die "Failed to build"
+cd ../public && npm install
+cd .. && docker build -f docker/Dockerfile -t superside . || die "Failed to build"

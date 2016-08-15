@@ -1,4 +1,4 @@
 [superside]
 bind_ip = "0.0.0.0"    # The IP to bind to for this service
-bind_port = 7778       # Port we'll bind to for this service
+bind_port = 7779       # Port we'll bind to for this service
 logging_level = "debug" # or "debug", or "error", etc
