@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
 	"github.com/newrelic/sidecar/catalog"
+	"github.com/nitro/superside/tracker"
 )
 
 var upgrader = websocket.Upgrader{
@@ -29,12 +30,12 @@ type ApiMessage struct {
 }
 
 type ApiStatus struct {
-	Message     string
-	LastChanged time.Time
+	Message        string
+	ClusterLatches *tracker.ClusterEventsLatch
 }
 
 // The health check endpoint.
-func healthHandler(response http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+func healthHandler(response http.ResponseWriter, req *http.Request, _ httprouter.Params, state *tracker.Tracker) {
 	defer req.Body.Close()
 	response.Header().Set("Content-Type", "application/json")
 
@@ -42,6 +43,7 @@ func healthHandler(response http.ResponseWriter, req *http.Request, _ httprouter
 
 	message, _ := json.Marshal(ApiStatus{
 		Message: "Healthy!",
+		ClusterLatches: state.EventsLatch,
 	})
 
 	response.Write(message)
@@ -140,12 +142,20 @@ func listenHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 }
 
 func uiRedirectHandler(response http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-    http.Redirect(response, req, "/ui/", 301)
+	http.Redirect(response, req, "/ui/", 301)
+}
+
+func makeTrackerHandler(fn func(http.ResponseWriter, *http.Request,
+	httprouter.Params, *tracker.Tracker)) httprouter.Handle {
+
+	return func(response http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		fn(response, req, params, state)
+	}
 }
 
 // Start the HTTP server and begin handling requests. This is a
 // blocking call.
-func serveHttp(listenIp string, listenPort int) {
+func serveHttp(listenIp string, listenPort int, state *tracker.Tracker) {
 	listenStr := fmt.Sprintf("%s:%d", listenIp, listenPort)
 
 	log.Infof("Starting up on %s", listenStr)
@@ -155,7 +165,7 @@ func serveHttp(listenIp string, listenPort int) {
 	router.POST("/api/update", updateHandler)
 	router.GET("/api/state/services", servicesHandler)
 	router.GET("/api/state/deployments", deploymentsHandler)
-	router.GET("/health", healthHandler)
+	router.GET("/health", makeTrackerHandler(healthHandler))
 	router.GET("/listen", listenHandler)
 	router.ServeFiles("/ui/*filepath", http.Dir("public/app"))
 

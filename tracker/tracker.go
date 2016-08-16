@@ -29,7 +29,7 @@ type Tracker struct {
 	stateLock           sync.Mutex
 	deployments         map[string]*circular.DeploymentsBuffer
 	store               persistence.Store
-	eventsLatch         *ClusterEventsLatch
+	EventsLatch         *ClusterEventsLatch
 }
 
 func NewTracker(svcEventsRingSize int, store persistence.Store) *Tracker {
@@ -38,7 +38,7 @@ func NewTracker(svcEventsRingSize int, store persistence.Store) *Tracker {
 		svcEvents:     circular.NewSvcEventsBuffer(svcEventsRingSize),
 		deployments:   make(map[string]*circular.DeploymentsBuffer, INITIAL_DEPLOYMENT_SIZE),
 		store:         store,
-		eventsLatch:   NewClusterEventsLatch(),
+		EventsLatch:   NewClusterEventsLatch(),
 	}
 
 	tracker.loadState()
@@ -290,7 +290,7 @@ func (t *Tracker) ProcessUpdates() {
 	go t.processDeployments()
 
 	for evt := range t.svcEventsChan {
-		if !t.eventsLatch.ShouldAccept(&evt) {
+		if !t.EventsLatch.ShouldAccept(&evt) {
 			continue
 		}
 		t.stateLock.Lock() // We'll call this a lot but there should be very little contention

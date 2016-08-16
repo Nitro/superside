@@ -34,8 +34,8 @@ func NewClusterEventsLatch() *ClusterEventsLatch {
 }
 
 func (l *ClusterEventsLatch) ShouldAccept(event *catalog.StateChangedEvent) bool {
-	// No ClusterName, no shoes, no service
-	if event.State.ClusterName == "" {
+	// No *Name, no shoes, no service
+	if event.State.ClusterName == "" || event.State.Hostname == "" {
 		return false
 	}
 

@@ -36,5 +36,5 @@ func main() {
 	go state.ProcessUpdates()
 	go state.ManagePersistence()
 
-	serveHttp(config.Superside.BindIP, config.Superside.BindPort)
+	serveHttp(config.Superside.BindIP, config.Superside.BindPort, state)
 }

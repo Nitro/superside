@@ -57,7 +57,8 @@ clusternames.shuffle.each do |clustername|
 
     json_data = JSON.pretty_generate(
       'State' => {
-        'ClusterName' => clustername
+        'ClusterName' => clustername,
+        'Hostname' => 'host1',
       },
       'ChangeEvent' => {
         'Service' => event['Event']['Service'],

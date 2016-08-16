@@ -45,5 +45,15 @@ func Test_ClusterEventsLatch(t *testing.T) {
 			latch.Latches[evt1.State.ClusterName].Expiry = time.Unix(0,0)
 			So(latch.ShouldAccept(evt2), ShouldBeTrue)
 		})
+
+		Convey("Does not accept events with an empty ClusterName", func() {
+			evt1.State.ClusterName = ""
+			So(latch.ShouldAccept(evt1), ShouldBeFalse)
+		})
+
+		Convey("Does not accept events with an empty Hostname", func() {
+			evt1.State.Hostname = ""
+			So(latch.ShouldAccept(evt1), ShouldBeFalse)
+		})
 	})
 }
