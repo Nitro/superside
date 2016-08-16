@@ -33,9 +33,7 @@ type ApiStatus struct {
 	LastChanged time.Time
 }
 
-// The health check endpoint. Tells us if HAproxy is running and has
-// been properly configured. Since this is critical infrastructure this
-// helps make sure a host is not "down" by havign the proxy down.
+// The health check endpoint.
 func healthHandler(response http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	defer req.Body.Close()
 	response.Header().Set("Content-Type", "application/json")
@@ -90,7 +88,7 @@ func updateHandler(response http.ResponseWriter, req *http.Request, _ httprouter
 
 	state.EnqueueUpdate(evt) // Potentially blocking
 
-	message, _ := json.Marshal(ApiMessage{Message: "OK"})
+	message, _ := json.Marshal(ApiMessage{"OK"})
 	response.Write(message)
 }
 

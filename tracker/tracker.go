@@ -29,6 +29,7 @@ type Tracker struct {
 	stateLock           sync.Mutex
 	deployments         map[string]*circular.DeploymentsBuffer
 	store               persistence.Store
+	eventsLatch         *ClusterEventsLatch
 }
 
 func NewTracker(svcEventsRingSize int, store persistence.Store) *Tracker {
@@ -37,6 +38,7 @@ func NewTracker(svcEventsRingSize int, store persistence.Store) *Tracker {
 		svcEvents:     circular.NewSvcEventsBuffer(svcEventsRingSize),
 		deployments:   make(map[string]*circular.DeploymentsBuffer, INITIAL_DEPLOYMENT_SIZE),
 		store:         store,
+		eventsLatch:   NewClusterEventsLatch(),
 	}
 
 	tracker.loadState()
@@ -44,7 +46,7 @@ func NewTracker(svcEventsRingSize int, store persistence.Store) *Tracker {
 	return tracker
 }
 
-// Enqueue an update to the channel. Rely on channel buffer. We block if channel is full
+// Enqueue an update to the channel. Rely on channel buffer. We block if channel is full.
 func (t *Tracker) EnqueueUpdate(evt catalog.StateChangedEvent) {
 	t.svcEventsChan <- evt
 }
@@ -101,7 +103,7 @@ func (t *Tracker) tellDeploymentListeners(deploy *datatypes.Deployment) {
 	}
 }
 
-// Compare some stuff and decide if this datatypes looks like it's
+// Compare some stuff and decide if this notification looks like it's
 // a deployment event.
 func looksLikeDeployment(notice *datatypes.Notification) bool {
 	evt := notice.Event
@@ -111,7 +113,7 @@ func looksLikeDeployment(notice *datatypes.Notification) bool {
 		(evt.PreviousStatus == service.UNKNOWN)
 }
 
-// Handle processing a single datatypes
+// Handle processing a single notification
 func (t *Tracker) processOneDeployment(notice *datatypes.Notification) {
 	evt := notice.Event
 	svc := evt.Service
@@ -288,6 +290,9 @@ func (t *Tracker) ProcessUpdates() {
 	go t.processDeployments()
 
 	for evt := range t.svcEventsChan {
+		if !t.eventsLatch.ShouldAccept(&evt) {
+			continue
+		}
 		t.stateLock.Lock() // We'll call this a lot but there should be very little contention
 		t.svcEvents.Insert(evt)
 		t.stateLock.Unlock()
