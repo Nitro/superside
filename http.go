@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/handlers"
