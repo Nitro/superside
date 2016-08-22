@@ -9,7 +9,7 @@ SuperSide is a multi-environment console for
 [Sidecar](https://github.com/newrelic/sidecar)-based infrastructures. It can be
 subscribed to state updates from Sidecar in multiple environments. Sidecar
 focuses on current state of the system, while Superside tracks history and adds
-the abstraction of Deplpoyments. These are then tracked and compared for each
+the abstraction of Deployments. These are then tracked and compared for each
 service between multiple environments.
 
 From the Superside console, you can see an ongoing stream of events in all of
