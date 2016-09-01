@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/nitro/superside",
 	"GoVersion": "go1.7",
-	"GodepVersion": "v67",
+	"GodepVersion": "v74",
 	"Deps": [
 		{
 			"ImportPath": "github.com/BurntSushi/toml",
