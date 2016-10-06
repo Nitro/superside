@@ -1,0 +1,51 @@
+    .bold {
+        font-weight: bold;
+    }
+
+    .larger {
+        font-size: large;
+    }
+
+    .pct50 {
+        width: 49%;
+        display: inline-block;
+    }
+
+    .panel-heading {
+        padding: 5px 15px;
+    }
+
+    .panel-body {
+        max-height: 800px;
+        overflow: auto;
+    }
+
+    .filters {
+        padding-top: 15px;
+    }
+
+    h4 {
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+
+    .table {
+        margin-bottom: 5px;
+        font-size: 15px;
+    }
+
+    body {
+        width: 100%;
+    }
+
+    table {
+        table-layout: fixed;
+    }
+
+    .align-right {
+        text-align: right;
+    }
+
+    label {
+        margin-left: 20px;
+    }

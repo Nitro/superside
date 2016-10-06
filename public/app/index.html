@@ -14,8 +14,8 @@
     <meta name="description" content="">
 
     <script src="bower_components/html5-boilerplate/dist/js/vendor/modernizr-2.8.3.min.js"></script>
-    <!--<link rel="stylesheet" type="text/css" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">-->
     <link rel="stylesheet" type="text/css" href="bootstrap-superhero.min.css">
+    <link rel="stylesheet" type="text/css" href="app.css">
     <link rel="stylesheet" href="bower_components/angular-timeline/dist/angular-timeline.css"/>
 </head>
 <body>
@@ -26,9 +26,13 @@
 <nav class="navbar navbar-default" ng-cloak>
     <div class="container-fluid">
         <div class="navbar-header">
-            <h1>Superside
+            <h1 style="display: inline;">Superside
                 <a class="navbar-brand" rel="home" href="#" title="Superside">
                 </a></h1>
+				<ul class="nav nav-pills">
+					<li role="presentation"><a href="/ui/#!/">Events</a></li>
+					<li role="presentation"><a href="/ui/#!/dashboard">Dashboard</a></li>
+				</ul>
         </div>
     </div>
 </nav>
@@ -49,5 +53,6 @@
 
 <script src="views/websockets-demo.js"></script>
 <script src="views/events.js"></script>
+<script src="views/dashboard.js"></script>
 </body>
 </html>

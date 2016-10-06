@@ -1,0 +1,12 @@
+<div ng-repeat="(name, clusters) in dashboardCtrl.services" class="col-md-3">
+    <div class="panel panel-default">
+        <div class="panel-heading"><h4>{{ name }}</h4></div>
+        <div class="panel-body larger" ng-class="dashboardCtrl.getVersionMatchStatus(name)">
+            <div ng-repeat-start="(envName, data) in clusters">
+                <span class="pct50 bold">{{ envName }} {{ data.Version }}</span>
+                <span class="pct50" style="text-align: right">{{ data.EndTime | timeAgo }}</span>
+            </div>
+            <br ng-repeat-end/>
+        </div>
+    </div>
+</div>

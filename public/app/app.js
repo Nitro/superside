@@ -23,6 +23,12 @@
                 controllerAs: 'eventsCtrl'
             });
 
+            $routeProvider.when('/dashboard', {
+                templateUrl: 'views/dashboard.html',
+                controller: 'dashboardController',
+                controllerAs: 'dashboardCtrl'
+            });
+
             $routeProvider.when('/websockets-demo', {
                 templateUrl: 'views/websockets-demo.html',
                 controller: 'websocketCtrl'
