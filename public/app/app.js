@@ -36,11 +36,6 @@
                 controllerAs: 'graphCtrl'
             });
 
-            $routeProvider.when('/websockets-demo', {
-                templateUrl: 'views/websockets-demo.html',
-                controller: 'websocketCtrl'
-            });
-
             $routeProvider.otherwise({redirectTo: '/'});
         }]);
 

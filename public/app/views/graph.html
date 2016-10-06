@@ -3,8 +3,8 @@
     svg {
         display: block;
         float: left;
-        height: 350px !important;
-        width: 500px !important;
+        height: 1024px !important;
+        width: 1024px !important;
     }
 	svg text {
 	    fill: white;
@@ -20,4 +20,14 @@
     }
 </style>
 
-<nvd3 options="graphCtrl.options" data="graphCtrl.percentages"></nvd3>
+<div class="col-md-12">
+	<div class="col-md-4">
+		<h3>Top Services by Number of Events</h3>
+		<nvd3 options="graphCtrl.options" data="graphCtrl.eventPercentages"></nvd3>
+	</div>
+
+	<div class="col-md-4">
+		<h3>Top Services by Number of Flaps</h3>
+		<nvd3 options="graphCtrl.options" data="graphCtrl.eventFlaps"></nvd3>
+	</div>
+</div>
