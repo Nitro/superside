@@ -72,20 +72,20 @@ func (b *DeploymentsBuffer) All() []*datatypes.Deployment {
 			return
 		}
 
-		deploy := item.(datatypes.Deployment)
-		deploys = append(deploys, &deploy)
+		deploy := item.(*datatypes.Deployment)
+		deploys = append(deploys, deploy)
 	})
 
 	return deploys
 }
 
 func (b *DeploymentsBuffer) Insert(deploy *datatypes.Deployment) {
-	b.deploys.Value = *deploy
+	b.deploys.Value = deploy
 	b.deploys = b.deploys.Next()
 }
 
 func (b *DeploymentsBuffer) GetLast() *datatypes.Deployment {
 	deploy := b.deploys.Prev()
-	value := deploy.Value.(datatypes.Deployment)
-	return &value
+	value := deploy.Value.(*datatypes.Deployment)
+	return value
 }
