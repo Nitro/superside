@@ -33,6 +33,8 @@
 
         };
 
+		var callbacks = [];
+
 		return {
 			events: events,
 			services: services,
@@ -41,6 +43,7 @@
 
 			addDeployment: addDeployment,
             addClusterName: addClusterName,
+			onSuccess: callbacks,
 
 			run: function() {
 				$http({
@@ -67,6 +70,11 @@
                                 addClusterName(deploy);
 							});
 						});
+						
+						// Trigger any success callbacks waiting on results
+						for (var i = 0; i < callbacks.length; i ++) {
+							callbacks[i]();
+						}
 
 					}, function (error) {
 						console.log('ERROR: ' + error);

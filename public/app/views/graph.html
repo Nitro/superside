@@ -1,0 +1,23 @@
+<link rel="stylesheet" href="bower_components/nvd3/build/nv.d3.min.css">
+<style>
+    svg {
+        display: block;
+        float: left;
+        height: 350px !important;
+        width: 500px !important;
+    }
+	svg text {
+	    fill: white;
+	}
+
+    .nvd3.nv-pie.nv-chart-donut2 .nv-pie-title {
+        fill: gray;
+    }
+
+    .nvd3.nv-pie.nv-chart-donut1 .nv-pie-title {
+        opacity: 0.4;
+        fill: green;
+    }
+</style>
+
+<nvd3 options="graphCtrl.options" data="graphCtrl.percentages"></nvd3>

@@ -4,6 +4,7 @@
     // Declare app level module which depends on views, and components
     angular.module('superside', [
         'ngRoute',
+		'nvd3',
         'superside.services',
         'superside.views',
         'superside.filters'
@@ -27,6 +28,12 @@
                 templateUrl: 'views/dashboard.html',
                 controller: 'dashboardController',
                 controllerAs: 'dashboardCtrl'
+            });
+
+            $routeProvider.when('/graph', {
+                templateUrl: 'views/graph.html',
+                controller: 'graphController',
+                controllerAs: 'graphCtrl'
             });
 
             $routeProvider.when('/websockets-demo', {
