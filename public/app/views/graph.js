@@ -31,27 +31,30 @@
 
 		// We have to wait on the data to come back from the stateService
 		stateService.onSuccess.push(function() {
-			// Percentage of total events
+			// Count of total # of events
 			var grouped = _.groupBy(self.events, 'Name');
-			self.eventPercentages = _.map(grouped, function(evts) { 
+			self.eventCounts = _.map(grouped, function(evts) { 
 				return { key: evts[0].Name.slice(0, 20), y: evts.length }
 			}).slice(0, 5);
 
 			// Events where the new status was Unhealthy
-			var flaps = _.map(grouped, function(evts) {
-				return { 
-						key: evts[0].Name,
-						flaps: _.groupBy(evts, function(evt) { return evt.Status })
-				};
-			}).slice(0, 5);
+			self.unhealthyEvents = [ 
+				{
+					key: 'Unhealthy Event Count',
+					values: filterByStatus(grouped, 'Unhealthy').slice(0, 5)
+				}
+			];
 
-			self.eventFlaps = _.map(flaps, function(flap) {
-				return { key: flap.key, y: flap.flaps.Unhealthy.length }
-			});
-
+			// Events where the new status was Tombstone
+			self.tombstoneEvents = [
+				{
+					key: 'Tombstone Event Count',
+					values: filterByStatus(grouped, 'Tombstone').slice(0, 5)
+				}
+			];
 		});
 
-        self.options = {
+        self.pieOptions = {
             chart: {
                 x: function(d) { return d.key },
                 y: function(d) { return d.y },
@@ -77,5 +80,49 @@
                 }
             }
 		};
+
+		self.barOptions = {
+			chart: {
+                x: function(d) { return d.label },
+                y: function(d) { return d.value },
+                type: 'discreteBarChart',
+                height: height,
+				width: width,
+				margin: {
+					top: 20,
+					right: 20,
+					bottom: 50,
+					left: 55
+				},
+                duration: 500,
+				xAxis: {
+					rotateLabels: -90
+				}
+            }
+		};
     }
+
+	// Expectes events grouped by Name and returns data formatted
+	// for bar charts.
+	function filterByStatus(events, status) {
+		var filtered = _.map(events, function(evts) {
+			return { 
+					label: evts[0].Name,
+					status: _.groupBy(evts, function(evt) { return evt.Status })
+			};
+		})
+
+		filtered = _.map(filtered, function(evt) {
+			var length = 0;
+			if(evt.status[status]) {
+				length = evt.status[status].length;
+			}
+
+			return { label: evt.label.slice(0, 20), value: length }
+		});
+
+		filtered = _.filter(filtered, function(evt) { return evt.value > 0; } );
+
+ 		return _.sortBy(filtered, function(evt) { return evt.value }).reverse();
+	};
 })(angular);

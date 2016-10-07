@@ -3,8 +3,8 @@
     svg {
         display: block;
         float: left;
-        height: 1024px !important;
-        width: 1024px !important;
+        height: 500px !important;
+        width: 350px !important;
     }
 	svg text {
 	    fill: white;
@@ -22,12 +22,17 @@
 
 <div class="col-md-12">
 	<div class="col-md-4">
-		<h3>Top Services by Number of Events</h3>
-		<nvd3 options="graphCtrl.options" data="graphCtrl.eventPercentages"></nvd3>
+		<h3>Top Services by Event Count</h3>
+		<nvd3 options="graphCtrl.pieOptions" data="graphCtrl.eventCounts"></nvd3>
 	</div>
 
 	<div class="col-md-4">
-		<h3>Top Services by Number of Flaps</h3>
-		<nvd3 options="graphCtrl.options" data="graphCtrl.eventFlaps"></nvd3>
+		<h3>Top Services by Unhealthy Events</h3>
+		<nvd3 options="graphCtrl.barOptions" data="graphCtrl.unhealthyEvents"></nvd3>
+	</div>
+
+	<div class="col-md-4">
+		<h3>Top Services by Tombstone Events</h3>
+		<nvd3 options="graphCtrl.barOptions" data="graphCtrl.tombstoneEvents"></nvd3>
 	</div>
 </div>
