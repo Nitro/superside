@@ -52,6 +52,8 @@ func healthHandler(response http.ResponseWriter, req *http.Request, _ httprouter
 func servicesHandler(response http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	defer req.Body.Close()
 	response.Header().Set("Content-Type", "application/json")
+	response.Header().Set("Access-Control-Allow-Origin", "*")
+	response.Header().Set("Access-Control-Allow-Methods", "GET")
 
 	message, _ := json.Marshal(state.GetSvcEventsList())
 	response.Write(message)
@@ -61,6 +63,8 @@ func servicesHandler(response http.ResponseWriter, req *http.Request, _ httprout
 func deploymentsHandler(response http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	defer req.Body.Close()
 	response.Header().Set("Content-Type", "application/json")
+	response.Header().Set("Access-Control-Allow-Origin", "*")
+	response.Header().Set("Access-Control-Allow-Methods", "GET")
 
 	message, _ := json.Marshal(state.GetDeployments())
 	response.Write(message)
