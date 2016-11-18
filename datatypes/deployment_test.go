@@ -57,6 +57,12 @@ func Test_DeploymentFromNotification(t *testing.T) {
 		So(deploy.ID, ShouldNotBeEmpty)
 		So(deploy.ClusterName, ShouldEqual, notice.ClusterName)
 		So(deploy.Version, ShouldEqual, "0.1")
+
+		Convey("Process images without version", func() {
+			notice.Event.Service.Image = "awesome-svc"
+			deploy = DeploymentFromNotification(notice)
+			So(deploy.Version, ShouldEqual, "")
+		})
 	})
 }
 
