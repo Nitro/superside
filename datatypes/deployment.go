@@ -62,9 +62,18 @@ func DeploymentFromNotification(notice *Notification) *Deployment {
 		Name:        svc.Name,
 		StartTime:   evt.Time,
 		EndTime:     evt.Time,
-		Version:     strings.Split(evt.Service.Image, ":")[1],
+		Version:     version(evt.Service.Image),
 		Image:       evt.Service.Image,
 		ClusterName: notice.ClusterName,
 		Hostnames:   []string{evt.Service.Hostname},
 	}
+}
+
+// Extract version from format 'name:version'
+func version(image string) string {
+	split := strings.Split(image, ":")
+	if len(split) <= 1 {
+		return ""
+	}
+	return split[1]
 }
