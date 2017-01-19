@@ -5,7 +5,7 @@ Find out what's going on in your services environment!
 
 ![Superside Screenshot](images/SuperSideOverview1.jpg)
 
-SuperSide is a multi-environment console for
+Superside is a multi-environment console for
 [Sidecar](https://github.com/newrelic/sidecar)-based infrastructures. It can be
 subscribed to state updates from Sidecar in multiple environments. Sidecar
 focuses on current state of the system, while Superside tracks history and adds

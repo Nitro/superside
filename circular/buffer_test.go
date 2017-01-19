@@ -3,9 +3,9 @@ package circular
 import (
 	"testing"
 
-	"github.com/newrelic/sidecar/catalog"
+	"github.com/Nitro/sidecar/catalog"
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/nitro/superside/datatypes"
+	"github.com/Nitro/superside/datatypes"
 )
 
 func Test_SvcEventsBuffer(t *testing.T) {

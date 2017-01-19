@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/nitro/superside",
+	"ImportPath": "github.com/Nitro/superside",
 	"GoVersion": "go1.7",
 	"GodepVersion": "v74",
 	"Deps": [
@@ -7,6 +7,25 @@
 			"ImportPath": "github.com/BurntSushi/toml",
 			"Comment": "v0.1.0-21-g056c9bc",
 			"Rev": "056c9bc7be7190eaa7715723883caffa5f8fa3e4"
+		},
+		{
+			"ImportPath": "github.com/Nitro/memberlist",
+			"Rev": "490eb18c36b5181b667a4cf41d05eabacd855aad"
+		},
+		{
+			"ImportPath": "github.com/Nitro/sidecar/catalog",
+			"Comment": "v1.0.0-20-g46fab84",
+			"Rev": "46fab840036624614313d6adeeccdebc20cfc8a5"
+		},
+		{
+			"ImportPath": "github.com/Nitro/sidecar/output",
+			"Comment": "v1.0.0-20-g46fab84",
+			"Rev": "46fab840036624614313d6adeeccdebc20cfc8a5"
+		},
+		{
+			"ImportPath": "github.com/Nitro/sidecar/service",
+			"Comment": "v1.0.0-20-g46fab84",
+			"Rev": "46fab840036624614313d6adeeccdebc20cfc8a5"
 		},
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -118,22 +137,6 @@
 		{
 			"ImportPath": "github.com/miekg/dns",
 			"Rev": "5d001d020961ae1c184f9f8152fdc73810481677"
-		},
-		{
-			"ImportPath": "github.com/newrelic/sidecar/catalog",
-			"Rev": "ebb3fe65b0122c62209ba7ecfb1af51603089ff7"
-		},
-		{
-			"ImportPath": "github.com/newrelic/sidecar/output",
-			"Rev": "ebb3fe65b0122c62209ba7ecfb1af51603089ff7"
-		},
-		{
-			"ImportPath": "github.com/newrelic/sidecar/service",
-			"Rev": "ebb3fe65b0122c62209ba7ecfb1af51603089ff7"
-		},
-		{
-			"ImportPath": "github.com/nitro/memberlist",
-			"Rev": "490eb18c36b5181b667a4cf41d05eabacd855aad"
 		},
 		{
 			"ImportPath": "github.com/opencontainers/runc/libcontainer/user",

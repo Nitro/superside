@@ -9,9 +9,9 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
-	"github.com/newrelic/sidecar/output"
-	"github.com/newrelic/sidecar/service"
-	"github.com/nitro/memberlist"
+	"github.com/Nitro/sidecar/output"
+	"github.com/Nitro/sidecar/service"
+	"github.com/Nitro/memberlist"
 	"github.com/relistan/go-director"
 )
 
@@ -65,11 +65,16 @@ type ServicesState struct {
 	LastChanged         time.Time
 	ClusterName         string
 	Hostname            string
-	Broadcasts          chan [][]byte      `json:"-"`
-	listeners           []chan ChangeEvent `json:"-"`
-	listenerLock        sync.Mutex         `json:"-"`
-	tombstoneRetransmit time.Duration      `json:"-"`
-	sync.Mutex
+	Broadcasts          chan [][]byte         `json:"-"`
+	ServiceMsgs         chan service.Service `json:"-"`
+	listeners           []Listener
+	tombstoneRetransmit time.Duration
+	sync.RWMutex
+}
+
+type Listener interface {
+	Chan() chan ChangeEvent
+	Name() string
 }
 
 // Returns a pointer to a properly configured ServicesState
@@ -84,10 +89,13 @@ func NewServicesState() *ServicesState {
 		log.Errorf("Error getting hostname! %s", err.Error())
 	}
 	state.tombstoneRetransmit = TOMBSTONE_RETRANSMIT
+	state.ServiceMsgs = make(chan service.Service, 25)
+
 	return &state
 }
 
 // Shortcut for checking if the server has this service or not.
+// Note: Not synchronized!
 func (server *Server) HasService(id string) bool {
 	_, ok := server.Services[id]
 	return ok
@@ -103,6 +111,16 @@ func (state *ServicesState) Encode() []byte {
 	}
 
 	return jsonData
+}
+
+// ProcessNewServiceMsgs is to be run in a goroutine, and processes incoming
+// service notices.
+func (state *ServicesState) ProcessServiceMsgs(looper director.Looper) {
+	looper.Loop(func() error {
+		service := <-state.ServiceMsgs
+		state.AddServiceEntry(service)
+		return nil
+	})
 }
 
 // Shortcut for checking if the Servers map has an entry for this
@@ -122,7 +140,6 @@ func (state *ServicesState) GetLocalService(id string) *service.Service {
 	if state.Servers != nil &&
 		state.Servers[state.Hostname] != nil &&
 		state.Servers[state.Hostname].Services != nil {
-
 		return state.Servers[state.Hostname].Services[id]
 	}
 
@@ -161,17 +178,16 @@ func (state *ServicesState) ServiceChanged(svc *service.Service, previousStatus 
 
 // Tell the state that something changed on a particular server so that it
 // can keep the timestamps up to date.
+// Note: not synchronized!
 func (state *ServicesState) serverChanged(hostname string, updated time.Time) {
 	if !state.HasServer(hostname) {
 		log.Errorf("Attempt to change a server we don't have! (%s)", hostname)
 		return
 	}
 
-	state.Lock()
 	state.Servers[hostname].LastUpdated = updated
 	state.Servers[hostname].LastChanged = updated
 	state.LastChanged = updated
-	state.Unlock()
 }
 
 // Tell all of our listeners that something changed for a host at
@@ -183,29 +199,25 @@ func (state *ServicesState) NotifyListeners(svc *service.Service, previousStatus
 		return
 	}
 
-	log.Infof("Notifying listeners of change at %s", changedTime.String())
+	log.Debugf("Notifying listeners of change at %s", changedTime.String())
 
 	event := ChangeEvent{Service: *svc, PreviousStatus: previousStatus, Time: changedTime}
-	state.listenerLock.Lock()
 	for _, listener := range state.listeners {
 		select {
-		case listener <- event:
+		case listener.Chan() <- event:
 			continue
 		default:
-			log.Error("NotifyListeners(): Can't send to listener!")
+			log.Warnf("Can't notify listener (%s). May not be ready yet.", listener.Name())
 		}
 	}
-	state.listenerLock.Unlock()
 }
 
 // Add an event listener channel to the list that will be notified on
 // major state change events. Channels must be buffered by at least 1
 // or they will block. Channels must be ready to receive input.
-func (state *ServicesState) AddListener(listener chan ChangeEvent) {
-	state.listenerLock.Lock()
+func (state *ServicesState) AddListener(listener Listener) {
 	state.listeners = append(state.listeners, listener)
-	state.listenerLock.Unlock()
-	log.Debugf("AddListener(): new count %d", len(state.listeners))
+	log.Debugf("AddListener(): added %s, new count %d", listener.Name(), len(state.listeners))
 }
 
 // Take a service and merge it into our state. Correctly handle
@@ -214,11 +226,15 @@ func (state *ServicesState) AddListener(listener chan ChangeEvent) {
 func (state *ServicesState) AddServiceEntry(entry service.Service) {
 	defer metrics.MeasureSince([]string{"services_state", "AddServiceEntry"}, time.Now())
 
+	state.Lock()
+	defer state.Unlock()
+
 	if !state.HasServer(entry.Hostname) {
 		state.Servers[entry.Hostname] = NewServer(entry.Hostname)
 	}
 
 	server := state.Servers[entry.Hostname]
+
 	// Only apply changes that are newer or services are missing
 	if !server.HasService(entry.ID) {
 		server.Services[entry.ID] = &entry
@@ -243,7 +259,7 @@ func (state *ServicesState) AddServiceEntry(entry service.Service) {
 func (state *ServicesState) Merge(otherState *ServicesState) {
 	for _, server := range otherState.Servers {
 		for _, service := range server.Services {
-			state.AddServiceEntry(*service)
+			state.ServiceMsgs <-*service
 		}
 	}
 }
@@ -303,12 +319,12 @@ func (state *ServicesState) Print(list *memberlist.Memberlist) {
 	log.Println(state.Format(list))
 }
 
-// Talk to the discovery mechanism and track any services we don't
-// already know about.
+// TrackNewServices talks to the discovery mechanism and tracks any services we
+// don't already know about.
 func (state *ServicesState) TrackNewServices(fn func() []service.Service, looper director.Looper) {
 	looper.Loop(func() error {
 		for _, container := range fn() {
-			state.AddServiceEntry(container)
+			state.ServiceMsgs <-container
 		}
 		return nil
 	})
@@ -329,7 +345,7 @@ func (state *ServicesState) IsNewService(svc *service.Service) bool {
 	return false
 }
 
-// Loops forever, transmitting info about our containers on the
+// BroadcastServices loops forever, transmitting info about our containers on the
 // broadcast channel. Intended to run as a background goroutine.
 func (state *ServicesState) BroadcastServices(fn func() []service.Service, looper director.Looper) {
 	lastTime := time.Unix(0, 0)
@@ -340,6 +356,9 @@ func (state *ServicesState) BroadcastServices(fn func() []service.Service, loope
 		haveNewServices := false
 
 		servicesList := fn()
+
+		state.RLock()
+		defer state.RUnlock()
 
 		for _, svc := range servicesList {
 			isNew := state.IsNewService(&svc)
@@ -385,7 +404,7 @@ func (state *ServicesState) BroadcastServices(fn func() []service.Service, loope
 func (state *ServicesState) SendServices(services []service.Service, looper director.Looper) {
 	// Announce these every second for awhile
 	go func() {
-		metrics.MeasureSince([]string{"services_state", "SendServices"}, time.Now())
+		defer metrics.MeasureSince([]string{"services_state", "SendServices"}, time.Now())
 
 		additionalTime := 0 * time.Second
 		looper.Loop(func() error {
@@ -411,7 +430,10 @@ func (state *ServicesState) SendServices(services []service.Service, looper dire
 
 func (state *ServicesState) BroadcastTombstones(fn func() []service.Service, looper director.Looper) {
 	looper.Loop(func() error {
-		metrics.MeasureSince([]string{"services_state", "BroadcastTombstones"}, time.Now())
+		defer metrics.MeasureSince([]string{"services_state", "BroadcastTombstones"}, time.Now())
+
+		state.Lock()
+		defer state.Unlock()
 
 		containerList := fn()
 		// Tell people about our dead services
@@ -436,7 +458,7 @@ func (state *ServicesState) BroadcastTombstones(fn func() []service.Service, loo
 }
 
 func (state *ServicesState) TombstoneOthersServices() []service.Service {
-	metrics.MeasureSince([]string{"services_state", "TombstoneOthersServices"}, time.Now())
+	defer metrics.MeasureSince([]string{"services_state", "TombstoneOthersServices"}, time.Now())
 
 	result := make([]service.Service, 0, 1)
 
@@ -448,6 +470,7 @@ func (state *ServicesState) TombstoneOthersServices() []service.Service {
 		if svc.IsTombstone() &&
 			svc.Updated.Before(time.Now().UTC().Add(0-TOMBSTONE_LIFESPAN)) {
 			delete(state.Servers[*hostname].Services, *id)
+
 			// If this is the last service, remove the server
 			if len(state.Servers[*hostname].Services) < 1 {
 				delete(state.Servers, *hostname)
@@ -519,7 +542,9 @@ func (state *ServicesState) EachServer(fn func(hostname *string, server *Server)
 
 func (state *ServicesState) EachService(fn func(hostname *string, serviceId *string, svc *service.Service)) {
 	state.EachServer(func(hostname *string, server *Server) {
-		for id, svc := range server.Services {
+		services := server.Services
+
+		for id, svc := range services {
 			fn(hostname, &id, svc)
 		}
 	})

@@ -5,8 +5,8 @@ import (
 	"time"
 
     . "github.com/smartystreets/goconvey/convey"
-	"github.com/newrelic/sidecar/catalog"
-	"github.com/newrelic/sidecar/service"
+	"github.com/Nitro/sidecar/catalog"
+	"github.com/Nitro/sidecar/service"
 )
 
 func Test_Matches(t *testing.T) {

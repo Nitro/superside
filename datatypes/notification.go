@@ -1,7 +1,7 @@
 package datatypes
 
 import (
-	"github.com/newrelic/sidecar/catalog"
+	"github.com/Nitro/sidecar/catalog"
 )
 
 type Notification struct {

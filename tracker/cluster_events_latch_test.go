@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/newrelic/sidecar/catalog"
+	"github.com/Nitro/sidecar/catalog"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

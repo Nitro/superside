@@ -2,8 +2,8 @@ package main
 
 import (
 	"gopkg.in/alecthomas/kingpin.v1"
-	"github.com/nitro/superside/tracker"
-	"github.com/nitro/superside/persistence"
+	"github.com/Nitro/superside/tracker"
+	"github.com/Nitro/superside/persistence"
 )
 
 type CliOpts struct {

@@ -6,11 +6,11 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/newrelic/sidecar/catalog"
-	"github.com/newrelic/sidecar/service"
-	"github.com/nitro/superside/circular"
-	"github.com/nitro/superside/datatypes"
-	"github.com/nitro/superside/persistence"
+	"github.com/Nitro/sidecar/catalog"
+	"github.com/Nitro/sidecar/service"
+	"github.com/Nitro/superside/circular"
+	"github.com/Nitro/superside/datatypes"
+	"github.com/Nitro/superside/persistence"
 )
 
 const (

@@ -11,8 +11,8 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
-	"github.com/newrelic/sidecar/catalog"
-	"github.com/nitro/superside/tracker"
+	"github.com/Nitro/sidecar/catalog"
+	"github.com/Nitro/superside/tracker"
 )
 
 var upgrader = websocket.Upgrader{

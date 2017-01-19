@@ -3,8 +3,8 @@ package circular
 import (
 	"container/ring"
 
-	"github.com/newrelic/sidecar/catalog"
-	"github.com/nitro/superside/datatypes"
+	"github.com/Nitro/sidecar/catalog"
+	"github.com/Nitro/superside/datatypes"
 )
 
 // A Ring buffer for SvcEvents
