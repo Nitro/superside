@@ -1,0 +1,35 @@
+
+language: go
+
+go:
+  - 1.7.x
+  - master
+
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - sudo apt-get install -y nodejs npm
+
+script:
+  - go test -v ./... && (CGO_ENABLED=0 GOOS=linux go build -ldflags '-d')
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "${TRAVIS_GO_VERSION::3}" == "${PRODUCTION_GO_VERSION}" ]; then
+      echo "Building container gonitro/superside:${TRAVIS_COMMIT::7}" &&
+      cd public && npm install && cd .. &&
+      docker build -f docker/Dockerfile -t superside .  &&
+      docker tag superside gonitro/superside:${TRAVIS_COMMIT::7} &&
+      docker tag superside gonitro/superside:latest;
+    fi
+
+after_success:
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - echo "Building on Go version ${TRAVIS_GO_VERSION} for branch ${TRAVIS_BRANCH}"
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "${TRAVIS_GO_VERSION::3}" == "${PRODUCTION_GO_VERSION}" ]; then
+      echo "Pushing container gonitro/superside:${TRAVIS_COMMIT::7}" &&
+      docker push gonitro/superside:${TRAVIS_COMMIT::7};
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "${TRAVIS_GO_VERSION::3}" == "${PRODUCTION_GO_VERSION}" ] && [ -z "${NO_PUSH_LATEST}" ]; then
+      docker push gonitro/superside:latest;
+    fi
