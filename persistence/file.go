@@ -7,7 +7,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
-// A persistence layer for Superside, using Redis as a backing store
+// A persistence layer for Superside, using the filesystem as a backing store
 type FileStore struct {
 	basePath string
 }

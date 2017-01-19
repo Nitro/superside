@@ -12,6 +12,5 @@ func (n *NoopStore) StoreBlob(key string, data []byte) error {
 }
 
 func (n *NoopStore) GetBlob(key string) ([]byte, error) {
-
 	return []byte{}, nil
 }
