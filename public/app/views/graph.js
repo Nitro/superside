@@ -132,9 +132,13 @@
 				clipVoronoi: false,
 				xAxis: {
 					axisLabel: "Time",
-					showMaxMin: false,
+					showMaxMin: true,
 					staggerLabels: true,
 					tickFormat: function(d) {
+						// How TF does this happen? Anyway, work around it
+						if (_.isString(d)) {
+							d = parseInt(d);
+						}
             			return d3.time.format('%Y-%m-%d %H:%M:%S')(new Date(d));
         			},
 					rotateLabels: -90
@@ -188,11 +192,14 @@
 				return memo;
 			}, {});
 
+			var roughValues = _.map(bucketed, function(k, v) {
+				return [ v, k ];
+			});
+
 			result.push({
 				key: env,
-				values: _.map(bucketed, function(k, v) {
-					return [ v, k ];
-				})
+				// Make sure the values are ordered or the chart flips out
+				values: _.sortBy(roughValues, function(item) { item[0] })
 			});
 
 		}
