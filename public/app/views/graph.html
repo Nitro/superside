@@ -3,8 +3,7 @@
     svg {
         display: block;
         float: left;
-        height: 500px !important;
-        width: 350px !important;
+        height: 600px !important;
     }
 	svg text {
 	    fill: white;
@@ -34,5 +33,12 @@
 	<div class="col-md-4">
 		<h3>Top Services by Tombstone Events</h3>
 		<nvd3 options="graphCtrl.barOptions" data="graphCtrl.tombstoneEvents"></nvd3>
+	</div>
+
+	<div class="row">
+		<div class="col-md-12">
+			<h3>State Change Events</h3>
+			<nvd3 options="graphCtrl.lineOptions" data="graphCtrl.statusChangeEvents"></nvd3>
+		</div>
 	</div>
 </div>

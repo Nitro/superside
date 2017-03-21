@@ -52,6 +52,9 @@
 					values: filterByStatus(grouped, 'Tombstone').slice(0, 5)
 				}
 			];
+
+			// Line chart events showing status changes
+			self.statusChangeEvents = aggregateStatusEvents(self.events, 'Status Change Events Over Time');
 		});
 
         self.pieOptions = {
@@ -100,7 +103,49 @@
 				}
             }
 		};
-    }
+
+		self.lineOptions = {
+			chart: {
+                x: function(d) { return d[0] },
+                y: function(d) { return d[1] },
+				type: "lineChart",
+				height: 450,
+				margin: {
+					top: 20,
+					right: 20,
+					bottom: 50,
+					left: 65
+				},
+				color: [
+					"#1f77b4",
+					"#ff7f0e",
+					"#2ca02c",
+					"#d62728",
+					"#9467bd",
+					"#8c564b",
+					"#e377c2",
+					"#7f7f7f",
+					"#bcbd22",
+					"#17becf"
+				],
+				useInteractiveGuideline: true,
+				clipVoronoi: false,
+				xAxis: {
+					axisLabel: "Time",
+					showMaxMin: false,
+					staggerLabels: true,
+					tickFormat: function(d) {
+            			return d3.time.format('%Y-%m-%d %H:%M:%S')(new Date(d));
+        			},
+					rotateLabels: -90
+				},
+				yAxis: {
+					axisLabel: "Count",
+					axisLabelDistance: 0
+				}
+			}
+		};
+	};
 
 	// Expectes events grouped by Name and returns data formatted
 	// for bar charts.
@@ -110,7 +155,7 @@
 					label: evts[0].Name,
 					status: _.groupBy(evts, function(evt) { return evt.Status })
 			};
-		})
+		});
 
 		filtered = _.map(filtered, function(evt) {
 			var length = 0;
@@ -124,5 +169,34 @@
 		filtered = _.filter(filtered, function(evt) { return evt.value > 0; } );
 
  		return _.sortBy(filtered, function(evt) { return evt.value }).reverse();
+	};
+
+	// Aggregate status change events by time bucket
+	function aggregateStatusEvents(events) {
+		var filteredByEnv = _.groupBy(events, function(evt) { return evt.ClusterName });
+		var result = [];
+
+		for(var env in filteredByEnv) {
+			var bucketed = _.reduce(filteredByEnv[env], function(memo, evt) {
+				// Bucket by 5 minute intervals
+				var bucket = Math.floor((Date.parse(evt.Time) / 300000)) * 300000
+				if(memo[bucket] == null) {
+					memo[bucket] = 0;
+				}
+				memo[bucket]++;
+
+				return memo;
+			}, {});
+
+			result.push({
+				key: env,
+				values: _.map(bucketed, function(k, v) {
+					return [ v, k ];
+				})
+			});
+
+		}
+
+		return result;
 	};
 })(angular);
