@@ -26,8 +26,10 @@
 			}
 		});
 
-        var height = 350;
+		// Some settings
+        var height = 500;
         var width = 350;
+		var timeWindow = 3 * 24 * 3600 * 1000; // 3 Days
 
 		// We have to wait on the data to come back from the stateService
 		stateService.onSuccess.push(function() {
@@ -54,7 +56,9 @@
 			];
 
 			// Line chart events showing status changes
-			self.statusChangeEvents = aggregateStatusEvents(self.events);
+			self.statusChangeEvents = aggregateStatusEvents(
+				filterByRecency(self.events, Date.now() - timeWindow)
+			);
 		});
 
         self.pieOptions = {
@@ -64,6 +68,12 @@
                 type: 'pieChart',
                 height: height,
 				width: width,
+				margin: {
+					top: 20,
+					right: 75,
+					bottom: 75,
+					left: 75
+				},
 				donut: true,
                 showLabels: true,
                 duration: 500,
@@ -94,7 +104,7 @@
 				margin: {
 					top: 20,
 					right: 20,
-					bottom: 50,
+					bottom: 150,
 					left: 55
 				},
                 duration: 500,
@@ -109,11 +119,11 @@
                 x: function(d) { return d.x },
                 y: function(d) { return d.y },
 				type: "lineChart",
-				height: 450,
+				height: height,
 				margin: {
 					top: 20,
 					right: 20,
-					bottom: 50,
+					bottom: 200,
 					left: 65
 				},
 				color: [
@@ -135,7 +145,8 @@
 					tickFormat: function(d) {
             			return d3.time.format('%Y-%m-%d %H:%M:%S')(new Date(d));
         			},
-					rotateLabels: -90
+					rotateLabels: -90,
+					ticks: 20
 				},
 				yAxis: {
 					axisLabel: "Count",
@@ -145,7 +156,7 @@
 		};
 	};
 
-	// Expectes events grouped by Name and returns data formatted
+	// Expects events grouped by Name and returns data formatted
 	// for bar charts.
 	function filterByStatus(events, status) {
 		var filtered = _.map(events, function(evts) {
@@ -169,7 +180,14 @@
  		return _.sortBy(filtered, function(evt) { return evt.value }).reverse();
 	};
 
-	// Aggregate status change events by time bucket
+	// Get all the data that's newer than a certain Date
+	function filterByRecency(events, startDate) {
+		return _.filter(events, function(evt) {
+			return (Date.parse(evt.Time) > startDate)
+		});
+	};
+
+	// Aggregate status change events by time bucket, format for line graph
 	function aggregateStatusEvents(events) {
 		var sorted = _.sortBy(events, function(evt) { return Date.parse(evt.Time)} );
 		var filteredByEnv = _.groupBy(sorted, function(evt) { return evt.ClusterName });
@@ -200,6 +218,9 @@
 				values: values
 			});
 		}
+
+		// Put the longest list first
+		result = _.sortBy(result, function(group) { return group.values.length }).reverse()
 
 		return result;
 	};
