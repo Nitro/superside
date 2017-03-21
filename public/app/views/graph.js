@@ -135,10 +135,6 @@
 					showMaxMin: true,
 					staggerLabels: true,
 					tickFormat: function(d) {
-						// How TF does this happen? Anyway, work around it
-						if (_.isString(d)) {
-							d = parseInt(d);
-						}
             			return d3.time.format('%Y-%m-%d %H:%M:%S')(new Date(d));
         			},
 					rotateLabels: -90
@@ -193,6 +189,10 @@
 			}, {});
 
 			var roughValues = _.map(bucketed, function(k, v) {
+				// How TF does this happen? Anyway, work around it
+				if (_.isString(v)) {
+					v = parseInt(v);
+				}
 				return [ v, k ];
 			});
 
