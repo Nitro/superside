@@ -54,7 +54,7 @@
 			];
 
 			// Line chart events showing status changes
-			self.statusChangeEvents = aggregateStatusEvents(self.events, 'Status Change Events Over Time');
+			self.statusChangeEvents = aggregateStatusEvents(self.events);
 		});
 
         self.pieOptions = {
@@ -106,8 +106,8 @@
 
 		self.lineOptions = {
 			chart: {
-                x: function(d) { return d[0] },
-                y: function(d) { return d[1] },
+                x: function(d) { return d.x },
+                y: function(d) { return d.y },
 				type: "lineChart",
 				height: 450,
 				margin: {
@@ -131,9 +131,7 @@
 				useInteractiveGuideline: true,
 				clipVoronoi: false,
 				xAxis: {
-					axisLabel: "Time",
-					showMaxMin: true,
-					staggerLabels: true,
+					axisLabel: "Date/time",
 					tickFormat: function(d) {
             			return d3.time.format('%Y-%m-%d %H:%M:%S')(new Date(d));
         			},
@@ -173,13 +171,14 @@
 
 	// Aggregate status change events by time bucket
 	function aggregateStatusEvents(events) {
-		var filteredByEnv = _.groupBy(events, function(evt) { return evt.ClusterName });
-		var result = [];
+		var sorted = _.sortBy(events, function(evt) { return Date.parse(evt.Time)} );
+		var filteredByEnv = _.groupBy(sorted, function(evt) { return evt.ClusterName });
 
+		var result = [];
 		for(var env in filteredByEnv) {
 			var bucketed = _.reduce(filteredByEnv[env], function(memo, evt) {
 				// Bucket by 5 minute intervals
-				var bucket = Math.floor((Date.parse(evt.Time) / 300000)) * 300000
+				var bucket = Math.floor((Date.parse(evt.Time) / (300000))) * 300000;
 				if(memo[bucket] == null) {
 					memo[bucket] = 0;
 				}
@@ -188,20 +187,18 @@
 				return memo;
 			}, {});
 
-			var roughValues = _.map(bucketed, function(k, v) {
+			var values = _.map(bucketed, function(v, k) {
 				// How TF does this happen? Anyway, work around it
-				if (_.isString(v)) {
-					v = parseInt(v);
+				if (_.isString(k)) {
+					k = parseInt(k);
 				}
-				return [ v, k ];
+				return { x: k, y: v };
 			});
 
 			result.push({
 				key: env,
-				// Make sure the values are ordered or the chart flips out
-				values: _.sortBy(roughValues, function(item) { item[0] })
+				values: values
 			});
-
 		}
 
 		return result;
