@@ -30,6 +30,7 @@
         var height = 500;
         var width = 350;
 		var timeWindow = 3 * 24 * 3600 * 1000; // 3 Days
+		self.baseTime = Date.now() - timeWindow; 
 
 		// We have to wait on the data to come back from the stateService
 		stateService.onSuccess.push(function() {
@@ -57,7 +58,7 @@
 
 			// Line chart events showing status changes
 			self.statusChangeEvents = aggregateStatusEvents(
-				filterByRecency(self.events, Date.now() - timeWindow)
+				filterByRecency(self.events, self.baseTime)
 			);
 		});
 
@@ -187,26 +188,43 @@
 		});
 	};
 
+	// Bucket by 5 minute intervals
+	function bucketize(time) {
+		if(time < self.baseTime) {
+			time = self.baseTime;
+		}
+ 		return (Math.floor(time / (300000)) * 300000).toString();
+	};
+
 	// Aggregate status change events by time bucket, format for line graph
 	function aggregateStatusEvents(events) {
-		var sorted = _.sortBy(events, function(evt) { return Date.parse(evt.Time)} );
+		var parsed =        _.map(events,     function(evt) { evt.Time = Date.parse(evt.Time); return evt });
+		var sorted =        _.sortBy(parsed,  function(evt) { return evt.Time } );
 		var filteredByEnv = _.groupBy(sorted, function(evt) { return evt.ClusterName });
+		var allKeys =       _.uniq(
+			_.map(sorted,     function(evt) { return bucketize(evt.Time) }), true
+		);
 
 		var result = [];
 		for(var env in filteredByEnv) {
+			// Prepare an empty set of buckets so all envs have the same keys
+			var emptyBuckets = {};
+			for(var i = 0; i < allKeys.length; i++ ) {
+				emptyBuckets[allKeys[i]] = 0;
+			};
+
 			var bucketed = _.reduce(filteredByEnv[env], function(memo, evt) {
-				// Bucket by 5 minute intervals
-				var bucket = Math.floor((Date.parse(evt.Time) / (300000))) * 300000;
+				var bucket = bucketize(evt.Time);
+
 				if(memo[bucket] == null) {
 					memo[bucket] = 0;
 				}
 				memo[bucket]++;
 
 				return memo;
-			}, {});
+			}, emptyBuckets);
 
 			var values = _.map(bucketed, function(v, k) {
-				// How TF does this happen? Anyway, work around it
 				if (_.isString(k)) {
 					k = parseInt(k);
 				}
@@ -217,7 +235,7 @@
 				key: env,
 				values: values
 			});
-		}
+		};
 
 		// Put the longest list first
 		result = _.sortBy(result, function(group) { return group.values.length }).reverse()
